@@ -19,8 +19,8 @@ help:
 	@echo "Targets: help all bclient bserver"
 	@echo "Arch is $(ARCH)"
 	@echo "OS is $(OS)"
-	@echo COMP_VER is $(COMP_VER)"
-	@echo COMP_NAME is $(COMP_NAME)"
+	@echo "COMP_VER is $(COMP_VER)"
+	@echo "COMP_NAME is $(COMP_NAME)"
 
 bclient: $(COBJS)
 	$(CC) -o bclient $(COBJS) $(LIBS)
