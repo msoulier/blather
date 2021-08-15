@@ -30,6 +30,8 @@
 *.exe
 *.out
 *.app
+bclient
+bserver
 
 # vim
 *.swp
