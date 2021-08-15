@@ -2,6 +2,19 @@
     http://www.but-i-digress.ca/a-working-logger.html
 */
 
+#include <stdio.h>
+#include <ostream>
+#include <boost/thread.hpp>
+#include <boost/thread/mutex.hpp>
+
+#define LOGLEVEL_TRACE 0
+#define LOGLEVEL_DEBUG 10
+#define LOGLEVEL_INFO 20
+#define LOGLEVEL_WARN 30
+#define LOGLEVEL_ERROR 40
+
+extern boost::thread_specific_ptr<std::stringstream> tls_buffer;
+
 class MLoggerHandler
 {
 public:
