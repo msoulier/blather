@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -Wall -std=c++11 -DBOOST_ALL_NO_LIB -DBOOST_ALL_DYN_LINK -DBOOST_LOG_DYN_LINK
+CFLAGS = -Wall -std=c++11 -DBOOST_ALL_NO_LIB -DBOOST_ALL_DYN_LINK -DBOOST_LOG_DYN_LINK -Wno-unknown-warning-option
 COBJS = bclient.o protocol.o logger.o
 SOBJS = bserver.o protocol.o logger.o
 LIBS = -lboost_log-mt -lpthread -lboost_thread-mt -lboost_system-mt

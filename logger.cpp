@@ -14,3 +14,8 @@ void Blogger::init()
         logging::trivial::severity >= logging::trivial::info
     );
 }
+
+void Blogger::info(std::string msg)
+{
+    BOOST_LOG_TRIVIAL(info) << msg;
+}

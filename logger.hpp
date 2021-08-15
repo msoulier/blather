@@ -9,6 +9,7 @@ class Blogger
 public:
     Blogger();
     ~Blogger();
+    void info(std::string msg);
 
 private:
     void init();

@@ -4,5 +4,7 @@
 Blogger logger;
 
 int main(int argc, char *argv[]) {
+    logger.info("Hello from server");
+
     return 0;
 }
