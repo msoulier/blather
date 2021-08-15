@@ -17,17 +17,17 @@ bclient: $(COBJS)
 bserver: $(SOBJS)
 	$(CC) -o bserver $(COBJS) $(LIBS)
 
-bclient.o: bclient.cc protocol.h logger.h
-	$(CC) $(CFLAGS) -c bclient.cc
+bclient.o: bclient.cpp protocol.hpp logger.hpp
+	$(CC) $(CFLAGS) -c bclient.cpp
 
-bserver.o: bserver.cc protocol.h logger.h
-	$(CC) $(CFLAGS) -c bserver.cc
+bserver.o: bserver.cpp protocol.hpp logger.hpp
+	$(CC) $(CFLAGS) -c bserver.cpp
 
-protocol.o: protocol.cc protocol.h
-	$(CC) $(CFLAGS) -c protocol.cc
+protocol.o: protocol.cpp protocol.hpp
+	$(CC) $(CFLAGS) -c protocol.cpp
 
-logger.o: logger.cc logger.h
-	$(CC) $(CFLAGS) -c logger.cc
+logger.o: logger.cpp logger.hpp
+	$(CC) $(CFLAGS) -c logger.cpp
 
 clean:
 	rm -f $(COBJS) $(SOBJS) bclient bserver

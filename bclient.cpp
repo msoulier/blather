@@ -1,5 +1,5 @@
-#include "logger.h"
-#include "protocol.h"
+#include "logger.hpp"
+#include "protocol.hpp"
 
 Blogger logger;
 
