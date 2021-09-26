@@ -1,5 +1,6 @@
 #include "logger.hpp"
 #include "protocol.hpp"
+#include "network.hpp"
 
 Blogger logger;
 
