@@ -13,6 +13,8 @@ class NetworkConnection
 public:
     // Constructor
     NetworkConnection();
+    // Constructor with params.
+    NetworkConnection(ConnType ctype, std::string address, uint16_t port);
     // Desctructor
     ~NetworkConnection();
     // Copy constructor
@@ -21,12 +23,24 @@ public:
     void operator=(NetworkConnection &source);
     // For a string rep of the object
     void Print(std::ostream *os);
+    // Setters
+    void SetAddress(std::string address);
+    void SetPort(uint16_t port);
+    void SetConnType(ConnType ctype);
+    // Getters
+    std::string GetAddress();
+    uint16_t GetPort();
+    ConnType GetConnType();
 
 private:
     // The type of connection
     ConnType conntype;
     // Reusable Copy method
     void Copy(NetworkConnection &source);
+    // Remote host
+    std::string address;
+    // Remote port
+    uint16_t port;
 };
 
 std::ostream &operator<<(std::ostream &os, NetworkConnection &conn);
