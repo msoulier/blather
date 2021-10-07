@@ -16,11 +16,18 @@ endif
 all: bclient bserver
 
 help:
-	@echo "Targets: help all bclient bserver"
+	@echo "Targets: help all bclient bserver test"
 	@echo "Arch is $(ARCH)"
 	@echo "OS is $(OS)"
 	@echo "COMP_VER is $(COMP_VER)"
 	@echo "COMP_NAME is $(COMP_NAME)"
+
+test.o: test.cpp network.hpp
+	$(CC) $(CFLAGS) -c test.cpp
+
+test: test.o network.o
+	$(CC) -o unittest test.o network.o
+	./unittest
 
 bclient: $(COBJS)
 	$(CC) -o bclient $(COBJS) $(LIBS)
@@ -44,4 +51,4 @@ network.o: network.cpp network.hpp
 	$(CC) $(CFLAGS) -c network.cpp
 
 clean:
-	rm -f $(COBJS) $(SOBJS) bclient bserver
+	rm -f *.o bclient bserver unittest

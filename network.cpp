@@ -38,7 +38,18 @@ void NetworkConnection::Copy(NetworkConnection &source)
 
 void NetworkConnection::Print(std::ostream *os)
 {
-    *os << "NetworkConnection: " << this->address << ":" << this->port;
+    *os << "NetworkConnection: ";
+    switch (this->conntype) {
+        case TCPCONN:
+            *os << "<TCP> ";
+            break;
+        case UDPCONN:
+            *os << "<UDP> ";
+            break;
+        default:
+            *os << "**Unknown** ";
+    }
+    *os << this->address << ":" << this->port;
 }
 
 std::ostream &operator<<(std::ostream &os, NetworkConnection &conn)
