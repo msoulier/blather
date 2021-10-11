@@ -38,7 +38,7 @@ test.o: test.cpp network.hpp
 	$(CC) $(CFLAGS) -c test.cpp
 
 test: test.o network.o
-	$(CC) -o unittest test.o network.o
+	$(CC) -o unittest test.o network.o $(LIBS)
 	./unittest
 
 bclient: $(COBJS)
