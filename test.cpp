@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "mlogger.hpp"
 #include "network.hpp"
 
 int main(void) {

@@ -3,17 +3,26 @@ makefile_dir := $(shell dirname $(current_makefile))
 include $(makefile_dir)/Makefile.arch
 
 CC = g++
-CFLAGS = -Wall -std=c++11 -DBOOST_ALL_NO_LIB -DBOOST_ALL_DYN_LINK -DBOOST_LOG_DYN_LINK -Wno-unknown-warning-option
-COBJS = bclient.o protocol.o logger.o network.o
-SOBJS = bserver.o protocol.o logger.o network.o
-LIBS = -lboost_log -lpthread -lboost_system
+CFLAGS = -Wall -std=c++11 -DBOOST_ALL_NO_LIB -DBOOST_ALL_DYN_LINK -DBOOST_LOG_DYN_LINK -Wno-unknown-warning-option -I../mikelibcpp
+COBJS = bclient.o protocol.o network.o
+SOBJS = bserver.o protocol.o network.o
+LIBS = -lboost_log -lpthread -lboost_system -lmikecpp
+OS := $(shell uname -s)
+LDFLAGS = -L../mikelibcpp
 
 ifeq ($(OS),DARWIN)
-	CFLAGS += -I/usr/local/Cellar/boost/1.76.0/include
-	LIBS = -lboost_log-mt -lpthread -lboost_thread-mt -lboost_system-mt
+	CFLAGS += -DDARWIN -I/usr/local/include -I/usr/local/Cellar/boost/1.76.0/include
+	LIBS = -lboost_log-mt -lpthread -lboost_thread-mt -lboost_system-mt -lpthread
+	LDFLAGS+=-L/usr/local/lib
 endif
 
-all: bclient bserver
+ifeq ($(OS),Linux)
+	LDFLAGS+=-L/usr/lib/x86_64-linux-gnu
+	CFLAGS+=-DLINUX -static
+	LIBS+=-lboost_thread -lboost_system -lpthread
+endif
+
+all: mikelibcpp bclient bserver
 
 help:
 	@echo "Targets: help all bclient bserver test"
@@ -21,6 +30,9 @@ help:
 	@echo "OS is $(OS)"
 	@echo "COMP_VER is $(COMP_VER)"
 	@echo "COMP_NAME is $(COMP_NAME)"
+
+mikelibcpp:
+	(cd ../mikelibcpp && make)
 
 test.o: test.cpp network.hpp
 	$(CC) $(CFLAGS) -c test.cpp
@@ -30,15 +42,15 @@ test: test.o network.o
 	./unittest
 
 bclient: $(COBJS)
-	$(CC) -o bclient $(COBJS) $(LIBS)
+	$(CC) -o bclient $(LDFLAGS) $(COBJS) $(LIBS)
 
 bserver: $(SOBJS)
-	$(CC) -o bserver $(COBJS) $(LIBS)
+	$(CC) -o bserver $(LDFLAGS) $(COBJS) $(LIBS)
 
-bclient.o: bclient.cpp protocol.hpp logger.hpp network.hpp
+bclient.o: bclient.cpp protocol.hpp network.hpp ../mikelibcpp/libmikecpp.a
 	$(CC) $(CFLAGS) -c bclient.cpp
 
-bserver.o: bserver.cpp protocol.hpp logger.hpp network.hpp
+bserver.o: bserver.cpp protocol.hpp network.hpp ../mikelibcpp/libmikecpp.a
 	$(CC) $(CFLAGS) -c bserver.cpp
 
 protocol.o: protocol.cpp protocol.hpp
@@ -52,3 +64,4 @@ network.o: network.cpp network.hpp
 
 clean:
 	rm -f *.o bclient bserver unittest
+	(cd ../mikelibcpp && make clean)
