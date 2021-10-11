@@ -6,20 +6,20 @@ CC = g++
 CFLAGS = -Wall -std=c++11 -DBOOST_ALL_NO_LIB -DBOOST_ALL_DYN_LINK -DBOOST_LOG_DYN_LINK -Wno-unknown-warning-option -I../mikelibcpp
 COBJS = bclient.o protocol.o network.o
 SOBJS = bserver.o protocol.o network.o
-LIBS = -lboost_log -lpthread -lboost_system -lmikecpp
+LIBS = -lpthread -lboost_system -lmikecpp
 OS := $(shell uname -s)
 LDFLAGS = -L../mikelibcpp
 
-ifeq ($(OS),DARWIN)
+ifeq ($(OS),Darwin)
 	CFLAGS += -DDARWIN -I/usr/local/include -I/usr/local/Cellar/boost/1.76.0/include
-	LIBS = -lboost_log-mt -lpthread -lboost_thread-mt -lboost_system-mt -lpthread
-	LDFLAGS+=-L/usr/local/lib
+	LIBS += -lboost_log-mt -lboost_thread-mt -lboost_system-mt
+	LDFLAGS + =-L/usr/local/lib
 endif
 
 ifeq ($(OS),Linux)
-	LDFLAGS+=-L/usr/lib/x86_64-linux-gnu
-	CFLAGS+=-DLINUX -static
-	LIBS+=-lboost_thread -lboost_system -lpthread
+	LDFLAGS += -L/usr/lib/x86_64-linux-gnu
+	CFLAGS += -DLINUX -static
+	LIBS += -lboost_thread -lboost_system
 endif
 
 all: mikelibcpp bclient bserver
@@ -30,6 +30,9 @@ help:
 	@echo "OS is $(OS)"
 	@echo "COMP_VER is $(COMP_VER)"
 	@echo "COMP_NAME is $(COMP_NAME)"
+	@echo "CFLAGS is $(CFLAGS)"
+	@echo "LDFLAGS is $(LDFLAGS)"
+	@echo "LIBS is $(LIBS)"
 
 mikelibcpp:
 	(cd ../mikelibcpp && make)
