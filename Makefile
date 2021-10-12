@@ -35,20 +35,20 @@ help:
 	@echo "LIBS is $(LIBS)"
 
 mikelibcpp:
-	(cd ../mikelibcpp && make)
+	cd ../mikelibcpp && make
 
 test.o: test.cpp network.hpp
 	$(CC) $(CFLAGS) -c test.cpp
 
 test: test.o network.o
-	$(CC) -o unittest test.o network.o $(LIBS)
+	$(CC) -o unittest test.o network.o $(LDFLAGS) $(LIBS)
 	./unittest
 
 bclient: $(COBJS)
 	$(CC) -o bclient $(LDFLAGS) $(COBJS) $(LIBS)
 
 bserver: $(SOBJS)
-	$(CC) -o bserver $(LDFLAGS) $(COBJS) $(LIBS)
+	$(CC) -o bserver $(LDFLAGS) $(SOBJS) $(LIBS)
 
 bclient.o: bclient.cpp protocol.hpp network.hpp ../mikelibcpp/libmikecpp.a
 	$(CC) $(CFLAGS) -c bclient.cpp

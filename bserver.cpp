@@ -6,7 +6,7 @@ MLogger logger;
 
 int main(int argc, char *argv[]) {
     logger.setLevel(LOGLEVEL_INFO);
-    logger.info() << "Hello from client" << std::endl;
+    logger.info() << "Hello from server" << std::endl;
 
     return 0;
 }
