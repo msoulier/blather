@@ -1,8 +1,6 @@
-#include "mlogger.hpp"
+#include "logger.hpp"
 #include "protocol.hpp"
 #include "network.hpp"
-
-MLogger logger;
 
 int main(int argc, char *argv[]) {
     logger.setLevel(LOGLEVEL_INFO);

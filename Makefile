@@ -4,8 +4,8 @@ include $(makefile_dir)/Makefile.arch
 
 CC = g++
 CFLAGS = -Wall -std=c++11 -DBOOST_ALL_NO_LIB -DBOOST_ALL_DYN_LINK -DBOOST_LOG_DYN_LINK -Wno-unknown-warning-option -I../mikelibcpp
-COBJS = bclient.o protocol.o network.o
-SOBJS = bserver.o protocol.o network.o
+COBJS = bclient.o protocol.o network.o logger.o
+SOBJS = bserver.o protocol.o network.o logger.o
 LIBS = -lpthread -lboost_system -lmikecpp
 OS := $(shell uname -s)
 LDFLAGS = -L../mikelibcpp
