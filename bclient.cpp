@@ -3,7 +3,7 @@
 #include "network.hpp"
 
 int main(int argc, char *argv[]) {
-    logger.setLevel(LOGLEVEL_INFO);
+    logger.setDefaults();
     logger.info() << "Hello from client" << std::endl;
 
     return 0;
