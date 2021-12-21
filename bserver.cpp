@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[]) {
     logger.setDefaults();
-    logger.info() << "Hello from server" << std::endl;
+    logger.info("Hello from server");
 
     return 0;
 }
