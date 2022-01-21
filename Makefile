@@ -17,7 +17,7 @@ endif
 
 ifeq ($(OS),Linux)
 	LDFLAGS += -L/usr/lib/x86_64-linux-gnu
-	CFLAGS += -DLINUX -static
+	CFLAGS += -DLINUX
 endif
 
 all: mikelibcpp bclient bserver
