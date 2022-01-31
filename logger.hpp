@@ -3,6 +3,6 @@
 
 #include "mlogger.hpp"
 
-extern MLogger logger;
+extern MLogger mlog;
 
 #endif

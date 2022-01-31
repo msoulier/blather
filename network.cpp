@@ -1,7 +1,20 @@
 #include <iostream>
+#include <string.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <assert.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-#include "mlogger.hpp"
+#include "logger.hpp"
 #include "network.hpp"
+
+/*
+ * NetworkConnection
+ */
 
 NetworkConnection::NetworkConnection(): conntype(TCPCONN),
                                         address(""),
@@ -86,4 +99,76 @@ uint16_t NetworkConnection::GetPort()
 ConnType NetworkConnection::GetConnType()
 {
     return this->conntype;
+}
+
+/*
+ * NetworkManager
+ */
+
+NetworkManager::NetworkManager() : m_sockfd(0)
+{}
+
+NetworkManager::~NetworkManager()
+{}
+
+/*
+ * TcpNetworkManager
+ */
+TcpNetworkManager::TcpNetworkManager()
+{
+    m_sockfd = socket(AF_INET, SOCK_STREAM, 0);
+}
+
+TcpNetworkManager::~TcpNetworkManager()
+{}
+
+int TcpNetworkManager::connect_to(std::string host, std::string port)
+{
+    mlog.debug("connect to %s:%d", host.c_str(), port.c_str());
+
+    struct addrinfo hints;
+    struct addrinfo *result = NULL;
+    struct addrinfo *rp = NULL;
+    int s, sfd, rv;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET; // AF_UNSPEC for v4 or v6
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = 0;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    s = getaddrinfo(host.c_str(), port.c_str(), &hints, &result);
+    if (s != 0) {
+        mlog.error("getaddrinfo: %s", gai_strerror(s));
+        rv = -1;
+        goto CLEANUP;
+    }
+
+    mlog.debug("looping over lookup results");
+    for (rp = result; rp != NULL; rp = rp->ai_next) {
+        sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+        if (sfd == -1)
+            continue;
+
+        mlog.debug("connection attempt");
+        if (connect(sfd, rp->ai_addr, rp->ai_addrlen) < 0) {
+            mlog.error("connect: %s", strerror(errno));
+            continue;
+        }
+        mlog.info("successful connection");
+        break;
+    }
+
+    if (rp == NULL) {
+        mlog.error("could not connect");
+        rv = -1;
+        goto CLEANUP;
+    }
+
+    rv = 1;
+
+CLEANUP:
+    if (result != NULL)
+        freeaddrinfo(result);
+    return rv;
 }

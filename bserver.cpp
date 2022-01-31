@@ -2,9 +2,11 @@
 #include "protocol.hpp"
 #include "network.hpp"
 
+#define VERSION "0.1"
+
 int main(int argc, char *argv[]) {
-    logger.setDefaults();
-    logger.info("Hello from server");
+    mlog.setDefaults();
+    mlog.info("blather server version %s", VERSION);
 
     return 0;
 }

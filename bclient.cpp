@@ -2,9 +2,27 @@
 #include "protocol.hpp"
 #include "network.hpp"
 
-int main(int argc, char *argv[]) {
-    logger.setDefaults();
-    logger.info("Hello from client");
+#define VERSION "0.1"
 
+int main(int argc, char *argv[]) {
+    mlog.setDefaults();
+    mlog.setLevel(MLoggerVerbosity::debug);
+    mlog.info("blather client version %s", VERSION);
+
+    if (argc < 3) {
+        mlog.error("Usage: %s <host> <port>", argv[0]);
+        return 1;
+    }
+    std::string host(argv[1]);
+    std::string port(argv[2]);
+    mlog.info("blather client told to connect to %s:%s",
+        host.c_str(), port.c_str());
+
+    TcpNetworkManager netman;
+
+    if (netman.connect_to(host, port) < 0) {
+        mlog.error("connection error");
+        return 1;
+    }
     return 0;
 }

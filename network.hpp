@@ -64,10 +64,16 @@ public:
     void Print(std::ostream *os);
 
 private:
-    // The list of current connections
-    std::vector<NetworkConnection*> connections;
+    // The list of current connections as a server
+    std::vector<NetworkConnection*> server_connections;
+    // The network connection as a client.
+    NetworkConnection m_client_connection;
     // Reusable Copy method
     void Copy(NetworkManager &source);
+
+protected:
+    // The socket file descriptor
+    int m_sockfd;
 };
 
 std::ostream &operator<<(std::ostream &os, NetworkManager &manager);
@@ -77,7 +83,8 @@ class TcpNetworkManager: public NetworkManager
 public:
     TcpNetworkManager();
     ~TcpNetworkManager();
-
+    // Connect to a remote host as a client.
+    int connect_to(std::string host, std::string port);
 private:
 
 };

@@ -1,3 +1,3 @@
 #include "logger.hpp"
 
-MLogger logger;
+MLogger mlog;

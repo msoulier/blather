@@ -10,6 +10,11 @@ LIBS = -lpthread -lmikecpp
 OS := $(shell uname -s)
 LDFLAGS = -L../mikelibcpp
 
+ifeq ($(DEBUG),1)
+	#CFLAGS += -ggdb -fsanitize=address
+	CFLAGS += -ggdb
+endif
+
 ifeq ($(OS),Darwin)
 	CFLAGS += -DDARWIN -I/usr/local/include
 	LDFLAGS + =-L/usr/local/lib
@@ -33,7 +38,7 @@ help:
 	@echo "LIBS is $(LIBS)"
 
 mikelibcpp:
-	cd ../mikelibcpp && make
+	cd ../mikelibcpp && make DEBUG=$(DEBUG)
 
 test.o: test.cpp network.hpp
 	$(CC) $(CFLAGS) -c test.cpp
