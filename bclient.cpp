@@ -24,5 +24,6 @@ int main(int argc, char *argv[]) {
         mlog.error("connection error");
         return 1;
     }
+    mlog.info("Connected to %s:%s\n", host.c_str(), port.c_str());
     return 0;
 }
