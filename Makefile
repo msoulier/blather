@@ -6,23 +6,12 @@ CC = g++
 CFLAGS = -Wall -std=c++17 -I../mikelibcpp
 COBJS = bclient.o protocol.o network.o logger.o
 SOBJS = bserver.o protocol.o network.o logger.o
-LIBS = -lpthread -lmikecpp
+LIBS = -lasan -lpthread -lmikecpp
 OS := $(shell uname -s)
 LDFLAGS = -L../mikelibcpp
 
 ifeq ($(DEBUG),1)
-	#CFLAGS += -ggdb -fsanitize=address
-	CFLAGS += -ggdb
-endif
-
-ifeq ($(OS),Darwin)
-	CFLAGS += -DDARWIN -I/usr/local/include
-	LDFLAGS + =-L/usr/local/lib
-endif
-
-ifeq ($(OS),Linux)
-	LDFLAGS += -L/usr/lib/x86_64-linux-gnu
-	CFLAGS += -DLINUX
+	CFLAGS += -ggdb -fsanitize=address
 endif
 
 all: mikelibcpp bclient bserver
