@@ -15,8 +15,8 @@ int main(int argc, char *argv[]) {
     }
     std::string host(argv[1]);
     std::string port(argv[2]);
-    mlog.info("blather client told to connect to %s:%s",
-        host.c_str(), port.c_str());
+    mlog.info() << "blather client told to connect to "
+                << host << ":" << port << std::endl;
 
     TcpNetworkManager netman;
 
@@ -24,6 +24,6 @@ int main(int argc, char *argv[]) {
         mlog.error("connection error");
         return 1;
     }
-    mlog.info("Connected to %s:%s\n", host.c_str(), port.c_str());
+    mlog.info() << "connected to " << host << ":" << port << std::endl;
     return 0;
 }

@@ -124,7 +124,7 @@ TcpNetworkManager::~TcpNetworkManager()
 
 int TcpNetworkManager::connect_to(std::string host, std::string port)
 {
-    mlog.debug("connect to %s:%s", host.c_str(), port.c_str());
+    mlog.debug() << "connect to " << host << ":" << port << std::endl;
 
     struct addrinfo hints;
     struct addrinfo *result = NULL;

@@ -3,7 +3,7 @@ makefile_dir := $(shell dirname $(current_makefile))
 include $(makefile_dir)/Makefile.arch
 
 CC = g++
-CFLAGS = -Wall -std=c++11 -I../mikelibcpp
+CFLAGS = -Wall -std=c++17 -I../mikelibcpp
 COBJS = bclient.o protocol.o network.o logger.o
 SOBJS = bserver.o protocol.o network.o logger.o
 LIBS = -lpthread -lmikecpp
