@@ -1,3 +1,4 @@
+#include <errno.h>
 #include "logger.hpp"
 #include "protocol.hpp"
 #include "network.hpp"
@@ -25,5 +26,25 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     mlog.info() << "connected to " << host << ":" << port << std::endl;
+
+    mlog.info() << "sending HTTP 1.1 GET request" << std::endl;
+    int bytes_sent = netman.send("GET / HTTP/1.1/r/n/r/n");
+    mlog.info() << "sent " << bytes_sent << " bytes" << std::endl;
+    if (bytes_sent < 0) {
+        perror("send");
+        return 1;
+    }
+
+    mlog.info() << "reading response" << std::endl;
+    std::string buffer;
+    int bytes_recv = netman.recv(buffer);
+    mlog.info() << "received " << bytes_recv << " bytes" << std::endl;
+    if (bytes_recv < 0) {
+        perror("recv");
+        return 1;
+    }
+
+    mlog.debug() << "response: " << buffer << std::endl;
+
     return 0;
 }

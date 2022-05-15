@@ -1,8 +1,8 @@
 #include <iostream>
 #include <string.h>
 #include <netinet/in.h>
-#include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <assert.h>
@@ -111,6 +111,23 @@ NetworkManager::NetworkManager() : m_sockfd(0)
 NetworkManager::~NetworkManager()
 {}
 
+ssize_t NetworkManager::send(const std::string msg) {
+    if (m_sockfd == 0) {
+        mlog.warn() << "send called on a closed socket" << std::endl;
+        return -1;
+    }
+    int bytes = ::send(m_sockfd, msg.c_str(), msg.size(), 0);
+    return bytes;
+}
+
+ssize_t NetworkManager::recv(std::string &buffer) {
+    char cbuffer[1024];
+    size_t size = 1024;
+    int bytes_read = ::recv(m_sockfd, cbuffer, size, 0);
+    buffer = cbuffer;
+    return bytes_read;
+}
+
 /*
  * TcpNetworkManager
  */
@@ -129,7 +146,7 @@ int TcpNetworkManager::connect_to(std::string host, std::string port)
     struct addrinfo hints;
     struct addrinfo *result = NULL;
     struct addrinfo *rp = NULL;
-    int s, sfd, rv;
+    int s, rv;
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET; // AF_UNSPEC for v4 or v6
@@ -146,12 +163,12 @@ int TcpNetworkManager::connect_to(std::string host, std::string port)
 
     mlog.debug("looping over lookup results");
     for (rp = result; rp != NULL; rp = rp->ai_next) {
-        sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-        if (sfd == -1)
+        m_sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+        if (m_sockfd == -1)
             continue;
 
         mlog.debug("connection attempt");
-        if (connect(sfd, rp->ai_addr, rp->ai_addrlen) < 0) {
+        if (connect(m_sockfd, rp->ai_addr, rp->ai_addrlen) < 0) {
             mlog.error("connect: %s", strerror(errno));
             continue;
         }

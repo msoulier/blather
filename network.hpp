@@ -62,6 +62,10 @@ public:
     void operator=(NetworkManager &source);
     // A print method for sending data an iostream
     void Print(std::ostream *os);
+    // Write data to an open socket
+    ssize_t send(const std::string msg);
+    // Read data from an open socket
+    ssize_t recv(std::string &buffer);
 
 private:
     // The list of current connections as a server
