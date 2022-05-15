@@ -27,20 +27,21 @@ int main(int argc, char *argv[]) {
     }
     mlog.info() << "connected to " << host << ":" << port << std::endl;
 
-    mlog.info() << "sending HTTP 1.1 GET request" << std::endl;
-    int bytes_sent = netman.send("GET / HTTP/1.1/r/n/r/n");
+    std::string msg("GET / HTTP/1.1\r\n\r\n");
+    mlog.info() << "sending " << msg << std::endl;
+    int bytes_sent = netman.write(msg);
     mlog.info() << "sent " << bytes_sent << " bytes" << std::endl;
     if (bytes_sent < 0) {
-        perror("send");
+        perror("write");
         return 1;
     }
 
     mlog.info() << "reading response" << std::endl;
     std::string buffer;
-    int bytes_recv = netman.recv(buffer);
+    int bytes_recv = netman.read(buffer);
     mlog.info() << "received " << bytes_recv << " bytes" << std::endl;
     if (bytes_recv < 0) {
-        perror("recv");
+        perror("read");
         return 1;
     }
 

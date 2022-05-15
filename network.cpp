@@ -111,19 +111,19 @@ NetworkManager::NetworkManager() : m_sockfd(0)
 NetworkManager::~NetworkManager()
 {}
 
-ssize_t NetworkManager::send(const std::string msg) {
+ssize_t NetworkManager::write(const std::string msg) {
     if (m_sockfd == 0) {
-        mlog.warn() << "send called on a closed socket" << std::endl;
+        mlog.warn() << "write called on a closed socket" << std::endl;
         return -1;
     }
-    int bytes = ::send(m_sockfd, msg.c_str(), msg.size(), 0);
+    int bytes = ::write(m_sockfd, msg.c_str(), msg.size());
     return bytes;
 }
 
-ssize_t NetworkManager::recv(std::string &buffer) {
+ssize_t NetworkManager::read(std::string &buffer) {
     char cbuffer[1024];
     size_t size = 1024;
-    int bytes_read = ::recv(m_sockfd, cbuffer, size, 0);
+    int bytes_read = ::read(m_sockfd, cbuffer, size);
     buffer = cbuffer;
     return bytes_read;
 }
