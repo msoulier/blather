@@ -6,6 +6,8 @@
 #include <iostream>
 #include <vector>
 
+#define MAX_BUFFER 1024
+
 enum ConnType { TCPCONN, UDPCONN };
 
 class NetworkConnection
@@ -45,6 +47,23 @@ private:
 
 std::ostream &operator<<(std::ostream &os, NetworkConnection &conn);
 
+class NetworkManager;
+
+class NetworkHandler {
+public:
+    NetworkHandler();
+    ~NetworkHandler();
+    int handle(std::string data, NetworkManager *manager);
+};
+
+std::ostream &operator<<(std::ostream &os, NetworkHandler &handler);
+
+enum NetworkManagerMode {
+    UNSET=1,
+    CLIENT,
+    SERVER
+};
+
 /*
  * A manager for multiple sockets, either as a client or server
  * depending on how it was invoked.
@@ -78,6 +97,17 @@ private:
 protected:
     // The socket file descriptor
     int m_sockfd;
+    // The current server connection fd: FIXME: array
+    int m_serverfd;
+    // The bind port.
+    int m_bind_port;
+    // Client or server?
+    NetworkManagerMode m_mode;
+    // The handler
+    NetworkHandler m_handler;
+
+    // Setting the mode.
+    void set_mode(NetworkManagerMode mode);
 };
 
 std::ostream &operator<<(std::ostream &os, NetworkManager &manager);
@@ -89,6 +119,8 @@ public:
     ~TcpNetworkManager();
     // Connect to a remote host as a client.
     int connect_to(std::string host, std::string port);
+    int listen(int port);
+    int accept(NetworkHandler handler);
 private:
 
 };

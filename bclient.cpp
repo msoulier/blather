@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
     }
     mlog.info() << "connected to " << host << ":" << port << std::endl;
 
-    std::string msg("GET / HTTP/1.1\r\n\r\n");
+    std::string msg("PING\r\n");
     mlog.info() << "sending " << msg << std::endl;
     int bytes_sent = netman.write(msg);
     mlog.info() << "sent " << bytes_sent << " bytes" << std::endl;

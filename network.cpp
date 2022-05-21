@@ -101,29 +101,74 @@ ConnType NetworkConnection::GetConnType()
     return this->conntype;
 }
 
+NetworkHandler::NetworkHandler() {}
+
+NetworkHandler::~NetworkHandler() {}
+
+int NetworkHandler::handle(std::string data, NetworkManager *manager) {
+    mlog.info() << "NetworkHandler::handle: " << data << std::endl;
+    if (data == "PING\r\n") {
+        manager->write("PONG\r\n");
+    }
+    return 1;
+}
+
 /*
  * NetworkManager
  */
 
-NetworkManager::NetworkManager() : m_sockfd(0)
+NetworkManager::NetworkManager() :
+    m_sockfd(0),
+    m_serverfd(0),
+    m_bind_port(0),
+    m_mode(NetworkManagerMode::UNSET),
+    m_handler(NetworkHandler())
 {}
 
 NetworkManager::~NetworkManager()
 {}
 
+void NetworkManager::set_mode(NetworkManagerMode mode) {
+    // Can only set mode from UNSET.
+    if (m_mode == NetworkManagerMode::UNSET) {
+        m_mode = mode;
+    } else {
+        throw std::runtime_error("mode already set");
+    }
+}
+
 ssize_t NetworkManager::write(const std::string msg) {
-    if (m_sockfd == 0) {
+    assert( m_mode != NetworkManagerMode::UNSET );
+    int fd;
+    if (m_mode == NetworkManagerMode::CLIENT) {
+        fd = m_sockfd;
+    } else {
+        fd = m_serverfd;
+    }
+    if (fd == 0) {
         mlog.warn() << "write called on a closed socket" << std::endl;
         return -1;
     }
-    int bytes = ::write(m_sockfd, msg.c_str(), msg.size());
+    assert( msg.size() <= MAX_BUFFER );
+    int bytes = ::write(fd, msg.c_str(), msg.size());
     return bytes;
 }
 
 ssize_t NetworkManager::read(std::string &buffer) {
-    char cbuffer[1024];
-    size_t size = 1024;
-    int bytes_read = ::read(m_sockfd, cbuffer, size);
+    assert( m_mode != NetworkManagerMode::UNSET );
+    int fd;
+    if (m_mode == NetworkManagerMode::CLIENT) {
+        fd = m_sockfd;
+    } else {
+        fd = m_serverfd;
+    }
+    char cbuffer[MAX_BUFFER];
+    size_t size = MAX_BUFFER;
+    int bytes_read = ::read(fd, cbuffer, size);
+    if (bytes_read < 0) {
+        perror("read");
+        return bytes_read;
+    }
     buffer = cbuffer;
     return bytes_read;
 }
@@ -141,6 +186,7 @@ TcpNetworkManager::~TcpNetworkManager()
 
 int TcpNetworkManager::connect_to(std::string host, std::string port)
 {
+    set_mode(NetworkManagerMode::CLIENT);
     mlog.debug() << "connect to " << host << ":" << port << std::endl;
 
     struct addrinfo hints;
@@ -173,6 +219,7 @@ int TcpNetworkManager::connect_to(std::string host, std::string port)
             continue;
         }
         mlog.info("successful connection");
+        // FIXME: set the m_bind_port after connecting
         break;
     }
 
@@ -188,4 +235,68 @@ CLEANUP:
     if (result != NULL)
         freeaddrinfo(result);
     return rv;
+}
+
+int TcpNetworkManager::listen(int port) {
+    struct sockaddr_in servaddr;
+    set_mode(NetworkManagerMode::SERVER);
+
+    // socket create and verification
+    m_sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (m_sockfd == -1) {
+        perror("socket creation failed...\n");
+        return 0;
+    }
+    bzero(&servaddr, sizeof(servaddr));
+
+    // assign IP, PORT
+    servaddr.sin_family = AF_INET;
+    // FIXME: need a bind parameter
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    servaddr.sin_port = htons(port);
+
+    // Binding newly created socket to given IP and verification
+    if ((bind(m_sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr))) != 0) {
+        perror("socket bind failed...\n");
+        return 0;
+    }
+
+    // Now server is ready to listen and verification
+    if ((::listen(m_sockfd, 5)) != 0) {
+        perror("Listen failed...\n");
+        return 0;
+    }
+    return 1;
+}
+
+int TcpNetworkManager::accept(NetworkHandler handler) {
+    m_handler = handler;
+    socklen_t len;
+    struct sockaddr_in client;
+
+    len = sizeof(client);
+
+    // Accept the data packet from client and verification
+    m_serverfd = ::accept(m_sockfd, (struct sockaddr*)&client, &len);
+    if (m_serverfd < 0) {
+        perror("server accept failed...\n");
+        return 0;
+    }
+
+    std::string buffer;
+    ssize_t bytes;
+    for(;;) {
+        bytes = read(buffer);
+        if (bytes == 0) {
+            mlog.debug() << "read 0 bytes" << std::endl;
+            break;
+        } else if (bytes < 0) {
+            mlog.error() << "read error" << std::endl;
+            break;
+        } else {
+            handler.handle(buffer, this);
+        }
+    }
+
+    return 1;
 }
