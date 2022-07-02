@@ -53,7 +53,10 @@ class NetworkHandler {
 public:
     NetworkHandler();
     ~NetworkHandler();
-    int handle(std::string data, NetworkManager *manager);
+    void run(NetworkManager *manager);
+    int handle(std::string data);
+private:
+    NetworkManager *m_manager;
 };
 
 std::ostream &operator<<(std::ostream &os, NetworkHandler &handler);

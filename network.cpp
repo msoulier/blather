@@ -105,10 +105,43 @@ NetworkHandler::NetworkHandler() {}
 
 NetworkHandler::~NetworkHandler() {}
 
-int NetworkHandler::handle(std::string data, NetworkManager *manager) {
+void NetworkHandler::run(NetworkManager *manager) {
+    m_manager = manager;
+
+    std::string buffer;
+    ssize_t bytes;
+    // Loop forever, and compose incoming data into messages
+    // separated by \r\n.
+    for(;;) {
+        std::size_t found = 0;
+        bytes = m_manager->read(buffer);
+        if (bytes == 0) {
+            mlog.debug() << "read 0 bytes" << std::endl;
+            break;
+        } else if (bytes < 0) {
+            mlog.error() << "read error" << std::endl;
+            break;
+        } else {
+            // Did we receive a full message? Or more?
+            for (;;) {
+                // FIXME: Look for all \r\n delimiters
+                if ((found = buffer.find("\r\n")) > 0) {
+                    mlog.debug() << "found is " << found << std::endl;
+                    std::string msg = buffer.substr(0, found);
+                    mlog.debug() << "msg is " << msg << std::endl;
+                    handle(msg);
+                }
+                break;
+            }
+        }
+    }
+}
+
+int NetworkHandler::handle(std::string data) {
     mlog.info() << "NetworkHandler::handle: " << data << std::endl;
-    if (data == "PING\r\n") {
-        manager->write("PONG\r\n");
+    if (data == "PING") {
+        // FIXME: the \r\n should be added automatically
+        m_manager->write("PONG\r\n");
     }
     return 1;
 }
@@ -283,20 +316,7 @@ int TcpNetworkManager::accept(NetworkHandler handler) {
         return 0;
     }
 
-    std::string buffer;
-    ssize_t bytes;
-    for(;;) {
-        bytes = read(buffer);
-        if (bytes == 0) {
-            mlog.debug() << "read 0 bytes" << std::endl;
-            break;
-        } else if (bytes < 0) {
-            mlog.error() << "read error" << std::endl;
-            break;
-        } else {
-            handler.handle(buffer, this);
-        }
-    }
+    m_handler.run(this);
 
     return 1;
 }
