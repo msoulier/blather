@@ -114,6 +114,7 @@ void NetworkHandler::run(NetworkManager *manager) {
     // separated by \r\n.
     for(;;) {
         std::size_t found = 0;
+        // FIXME: must append to the buffer, not clobber it
         bytes = m_manager->read(buffer);
         if (bytes == 0) {
             mlog.debug() << "read 0 bytes" << std::endl;
@@ -140,8 +141,7 @@ void NetworkHandler::run(NetworkManager *manager) {
 int NetworkHandler::handle(std::string data) {
     mlog.info() << "NetworkHandler::handle: " << data << std::endl;
     if (data == "PING") {
-        // FIXME: the \r\n should be added automatically
-        m_manager->write("PONG\r\n");
+        m_manager->send_msg("PONG");
     }
     return 1;
 }
@@ -168,6 +168,10 @@ void NetworkManager::set_mode(NetworkManagerMode mode) {
     } else {
         throw std::runtime_error("mode already set");
     }
+}
+
+ssize_t NetworkManager::send_msg(const std::string msg) {
+    return write(msg + "\r\n");
 }
 
 ssize_t NetworkManager::write(const std::string msg) {

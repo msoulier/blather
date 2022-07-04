@@ -5,6 +5,39 @@
 
 #define VERSION "0.1"
 
+int connect_server(TcpNetworkManager &netman, std::string host, std::string port) {
+    mlog.info() << "blather client told to connect to "
+                << host << ":" << port << std::endl;
+
+    if (netman.connect_to(host, port) < 0) {
+        mlog.error("connection error");
+        return 0;
+    }
+    mlog.info() << "connected to " << host << ":" << port << std::endl;
+
+    std::string msg("PING");
+    mlog.info() << "sending " << msg << std::endl;
+    int bytes_sent = netman.send_msg(msg);
+    mlog.info() << "sent " << bytes_sent << " bytes" << std::endl;
+    if (bytes_sent < 0) {
+        perror("write");
+        return 0;
+    }
+
+    mlog.info() << "reading response" << std::endl;
+    std::string buffer;
+    int bytes_recv = netman.read(buffer);
+    mlog.info() << "received " << bytes_recv << " bytes" << std::endl;
+    if (bytes_recv < 0) {
+        perror("read");
+        return 0;
+    }
+
+    mlog.debug() << "response: " << buffer << std::endl;
+
+    return 1;
+}
+
 int main(int argc, char *argv[]) {
     mlog.setDefaults();
     mlog.setLevel(MLoggerVerbosity::debug);
@@ -16,36 +49,16 @@ int main(int argc, char *argv[]) {
     }
     std::string host(argv[1]);
     std::string port(argv[2]);
-    mlog.info() << "blather client told to connect to "
-                << host << ":" << port << std::endl;
 
     TcpNetworkManager netman;
 
-    if (netman.connect_to(host, port) < 0) {
-        mlog.error("connection error");
-        return 1;
-    }
-    mlog.info() << "connected to " << host << ":" << port << std::endl;
-
-    std::string msg("PING\r\n");
-    mlog.info() << "sending " << msg << std::endl;
-    int bytes_sent = netman.write(msg);
-    mlog.info() << "sent " << bytes_sent << " bytes" << std::endl;
-    if (bytes_sent < 0) {
-        perror("write");
+    if (connect_server(netman, host, port)) {
+        mlog.info() << "Connected to server at " << host << ":" << port << std::endl;
+    } else {
+        mlog.error() << "Failed to connect to server at " << host << ":" << port << std::endl;
         return 1;
     }
 
-    mlog.info() << "reading response" << std::endl;
-    std::string buffer;
-    int bytes_recv = netman.read(buffer);
-    mlog.info() << "received " << bytes_recv << " bytes" << std::endl;
-    if (bytes_recv < 0) {
-        perror("read");
-        return 1;
-    }
-
-    mlog.debug() << "response: " << buffer << std::endl;
-
-    return 0;
+    // Server connection is up, time to start talking.
+    return 1;
 }

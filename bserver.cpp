@@ -6,6 +6,11 @@
 
 #define VERSION "0.1"
 
+int accept_connections(TcpNetworkManager &netman) {
+    mlog.debug() << "going into accept" << std::endl;
+    return netman.accept(NetworkHandler());
+}
+
 int main(int argc, char *argv[]) {
     mlog.setDefaults();
     mlog.setLevel(MLoggerVerbosity::debug);
@@ -30,8 +35,17 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     mlog.info() << "listening on " << "0.0.0.0" << ":" << port << std::endl;
-    mlog.debug() << "going into accept" << std::endl;
-    netman.accept(NetworkHandler());
+
+    // FIXME: need to spawn a thread for each connection
+    for (;;) {
+        if (accept_connections(netman)) {
+            mlog.debug() << "Successfully finished handling connection" << std::endl;
+        } else {
+            mlog.error() << "Error handling connection" << std::endl;
+        }
+    }
+
+    mlog.info() << "exiting" << std::endl;
 
     return 0;
 }

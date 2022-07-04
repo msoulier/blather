@@ -84,6 +84,8 @@ public:
     void operator=(NetworkManager &source);
     // A print method for sending data an iostream
     void Print(std::ostream *os);
+    // Send a message - wrapper around write - adds \r\n
+    ssize_t send_msg(const std::string msg);
     // Write data to an open socket
     ssize_t write(const std::string msg);
     // Read data from an open socket
