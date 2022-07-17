@@ -2,6 +2,7 @@
 #include "logger.hpp"
 #include "protocol.hpp"
 #include "network.hpp"
+#include "session.hpp"
 
 #define VERSION "0.1"
 
@@ -15,27 +16,33 @@ int connect_server(TcpNetworkManager &netman, std::string host, std::string port
     }
     mlog.info() << "connected to " << host << ":" << port << std::endl;
 
+    // FIXME: this should be handled by the ProtocolHandler
     std::string msg("PING");
-    mlog.info() << "sending " << msg << std::endl;
-    int bytes_sent = netman.send_msg(msg);
-    mlog.info() << "sent " << bytes_sent << " bytes" << std::endl;
+    mlog.debug() << "sending " << msg << std::endl;
+    int bytes_sent = netman.write(msg + "\r\n");
+    mlog.debug() << "sent " << bytes_sent << " bytes" << std::endl;
     if (bytes_sent < 0) {
         perror("write");
         return 0;
     }
 
-    mlog.info() << "reading response" << std::endl;
+    mlog.debug() << "reading response" << std::endl;
     std::string buffer;
     int bytes_recv = netman.read(buffer);
-    mlog.info() << "received " << bytes_recv << " bytes" << std::endl;
+    mlog.debug() << "received " << bytes_recv << " bytes" << std::endl;
     if (bytes_recv < 0) {
         perror("read");
         return 0;
     }
 
-    mlog.debug() << "response: " << buffer << std::endl;
+    mlog.debug() << "msg was " << buffer << std::endl;
 
-    return 1;
+    if (buffer == "PONG") {
+        return 1;
+    } else {
+        mlog.error() << "bad response from server: " << buffer << std::endl;
+        return 0;
+    }
 }
 
 int main(int argc, char *argv[]) {
@@ -51,6 +58,8 @@ int main(int argc, char *argv[]) {
     std::string port(argv[2]);
 
     TcpNetworkManager netman;
+    ProtocolHandler protocol;
+    SessionHandler session(&netman, &protocol);
 
     if (connect_server(netman, host, port)) {
         mlog.info() << "Connected to server at " << host << ":" << port << std::endl;
@@ -60,5 +69,6 @@ int main(int argc, char *argv[]) {
     }
 
     // Server connection is up, time to start talking.
+    // session.run();
     return 1;
 }

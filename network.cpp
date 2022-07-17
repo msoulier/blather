@@ -13,140 +13,6 @@
 #include "network.hpp"
 
 /*
- * NetworkConnection
- */
-
-NetworkConnection::NetworkConnection(): conntype(TCPCONN),
-                                        address(""),
-                                        port(0)
-{
-}
-
-NetworkConnection::NetworkConnection(ConnType ctype,
-                                     std::string address,
-                                     uint16_t port)
-{
-    SetConnType(ctype);
-    SetAddress(address);
-    SetPort(port);
-}
-
-NetworkConnection::~NetworkConnection()
-{
-}
-
-NetworkConnection::NetworkConnection(NetworkConnection &source)
-{
-    Copy(source);
-}
-
-void NetworkConnection::operator=(NetworkConnection &source)
-{
-    Copy(source);
-}
-
-void NetworkConnection::Copy(NetworkConnection &source)
-{
-}
-
-void NetworkConnection::Print(std::ostream *os)
-{
-    *os << "NetworkConnection: ";
-    switch (this->conntype) {
-        case TCPCONN:
-            *os << "<TCP> ";
-            break;
-        case UDPCONN:
-            *os << "<UDP> ";
-            break;
-        default:
-            *os << "**Unknown** ";
-    }
-    *os << this->address << ":" << this->port;
-}
-
-std::ostream &operator<<(std::ostream &os, NetworkConnection &conn)
-{
-    conn.Print(&os);
-    return os;
-}
-
-void NetworkConnection::SetAddress(std::string address)
-{
-    this->address = address;
-}
-
-void NetworkConnection::SetPort(uint16_t port)
-{
-    this->port = port;
-}
-
-void NetworkConnection::SetConnType(ConnType ctype)
-{
-    this->conntype = ctype;
-}
-
-std::string NetworkConnection::GetAddress()
-{
-    return this->address;
-}
-
-uint16_t NetworkConnection::GetPort()
-{
-    return this->port;
-}
-
-ConnType NetworkConnection::GetConnType()
-{
-    return this->conntype;
-}
-
-NetworkHandler::NetworkHandler() {}
-
-NetworkHandler::~NetworkHandler() {}
-
-void NetworkHandler::run(NetworkManager *manager) {
-    m_manager = manager;
-
-    std::string buffer;
-    ssize_t bytes;
-    // Loop forever, and compose incoming data into messages
-    // separated by \r\n.
-    for(;;) {
-        std::size_t found = 0;
-        // FIXME: must append to the buffer, not clobber it
-        bytes = m_manager->read(buffer);
-        if (bytes == 0) {
-            mlog.debug() << "read 0 bytes" << std::endl;
-            break;
-        } else if (bytes < 0) {
-            mlog.error() << "read error" << std::endl;
-            break;
-        } else {
-            // Did we receive a full message? Or more?
-            for (;;) {
-                // FIXME: Look for all \r\n delimiters
-                if ((found = buffer.find("\r\n")) > 0) {
-                    mlog.debug() << "found is " << found << std::endl;
-                    std::string msg = buffer.substr(0, found);
-                    mlog.debug() << "msg is " << msg << std::endl;
-                    handle(msg);
-                }
-                break;
-            }
-        }
-    }
-}
-
-int NetworkHandler::handle(std::string data) {
-    mlog.info() << "NetworkHandler::handle: " << data << std::endl;
-    if (data == "PING") {
-        m_manager->send_msg("PONG");
-    }
-    return 1;
-}
-
-/*
  * NetworkManager
  */
 
@@ -154,8 +20,7 @@ NetworkManager::NetworkManager() :
     m_sockfd(0),
     m_serverfd(0),
     m_bind_port(0),
-    m_mode(NetworkManagerMode::UNSET),
-    m_handler(NetworkHandler())
+    m_mode(NetworkManagerMode::UNSET)
 {}
 
 NetworkManager::~NetworkManager()
@@ -168,10 +33,6 @@ void NetworkManager::set_mode(NetworkManagerMode mode) {
     } else {
         throw std::runtime_error("mode already set");
     }
-}
-
-ssize_t NetworkManager::send_msg(const std::string msg) {
-    return write(msg + "\r\n");
 }
 
 ssize_t NetworkManager::write(const std::string msg) {
@@ -306,8 +167,7 @@ int TcpNetworkManager::listen(int port) {
     return 1;
 }
 
-int TcpNetworkManager::accept(NetworkHandler handler) {
-    m_handler = handler;
+int TcpNetworkManager::accept() {
     socklen_t len;
     struct sockaddr_in client;
 
@@ -319,8 +179,6 @@ int TcpNetworkManager::accept(NetworkHandler handler) {
         perror("server accept failed...\n");
         return 0;
     }
-
-    m_handler.run(this);
 
     return 1;
 }

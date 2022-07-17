@@ -4,8 +4,8 @@ include $(makefile_dir)/Makefile.arch
 
 CC = g++
 CFLAGS = -Wall -std=c++17 -I../mikelibcpp
-COBJS = bclient.o protocol.o network.o logger.o
-SOBJS = bserver.o protocol.o network.o logger.o
+COBJS = bclient.o protocol.o network.o logger.o session.o
+SOBJS = bserver.o protocol.o network.o logger.o session.o
 LIBS = -lasan -lpthread -lmikecpp
 OS := $(shell uname -s)
 LDFLAGS = -L../mikelibcpp
@@ -56,6 +56,9 @@ logger.o: logger.cpp logger.hpp
 
 network.o: network.cpp network.hpp
 	$(CC) $(CFLAGS) -c network.cpp
+
+session.o: session.cpp session.hpp
+	$(CC) $(CFLAGS) -c session.cpp
 
 clean:
 	rm -f *.o bclient bserver unittest
