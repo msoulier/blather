@@ -6,6 +6,10 @@
 
 #define VERSION "0.1"
 
+// Set by parse_arguments
+std::string host;
+std::string port;
+
 int connect_server(TcpNetworkManager &netman, std::string host, std::string port) {
     mlog.info() << "blather client told to connect to "
                 << host << ":" << port << std::endl;
@@ -45,17 +49,32 @@ int connect_server(TcpNetworkManager &netman, std::string host, std::string port
     }
 }
 
-int main(int argc, char *argv[]) {
-    mlog.setDefaults();
-    mlog.setLevel(MLoggerVerbosity::debug);
-    mlog.info("blather client version %s", VERSION);
-
+int parse_arguments(int argc, char *argv[]) {
     if (argc < 3) {
         mlog.error("Usage: %s <host> <port>", argv[0]);
+        return 0;
+    }
+    for (int i = 1; i < argc; ++i) {
+        std::string arg(argv[i]);
+        if ((arg == "-d") || (arg == "--debug")) {
+            mlog.setLevel(MLoggerVerbosity::debug);
+        } else if (host.empty()) {
+            host = arg;
+        } else {
+            port = arg;
+        }
+    }
+    return 1;
+}
+
+int main(int argc, char *argv[]) {
+    mlog.setDefaults();
+    mlog.setLevel(MLoggerVerbosity::info);
+    mlog.info("blather client version %s", VERSION);
+
+    if (! parse_arguments(argc, argv)) {
         return 1;
     }
-    std::string host(argv[1]);
-    std::string port(argv[2]);
 
     TcpNetworkManager netman;
     ProtocolHandler protocol;

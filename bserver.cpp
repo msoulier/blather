@@ -7,6 +7,8 @@
 
 #define VERSION "0.1"
 
+int port = 0;
+
 int accept_connections(TcpNetworkManager &netman, SessionHandler &session) {
     // FIXME: must evolve to handling multiple connections
     mlog.debug() << "going into accept" << std::endl;
@@ -19,22 +21,37 @@ int accept_connections(TcpNetworkManager &netman, SessionHandler &session) {
     }
 }
 
+int parse_arguments(int argc, char *argv[]) {
+    if (argc < 2) {
+        mlog.error("Usage: %s <port>", argv[0]);
+        return 0;
+    }
+    for (int i = 1; i < argc; ++i) {
+        std::string arg(argv[i]);
+        if ((arg == "-d") || (arg == "--debug")) {
+            mlog.setLevel(MLoggerVerbosity::debug);
+        } else {
+            port = atoi(argv[1]);
+            if (port == 0) {
+                mlog.error() << "listen port must be a positive integer" << std::endl;
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
 int main(int argc, char *argv[]) {
     mlog.setDefaults();
     mlog.setLevel(MLoggerVerbosity::debug);
     mlog.info("blather server version %s", VERSION);
 
-    if (argc < 2) {
-        mlog.error("Usage: %s <port>", argv[0]);
-        return 1;
-    }
-    int port = atoi(argv[1]);
-    if (port == 0) {
-        mlog.error() << "listen port must be a positive integer" << std::endl;
-        return 1;
-    }
     mlog.info() << "blather server told to listen on "
                 << "0.0.0.0" << ":" << port << std::endl;
+
+    if (! parse_arguments(argc, argv)) {
+        return 1;
+    }
 
     TcpNetworkManager netman;
     ProtocolHandler protocol;
