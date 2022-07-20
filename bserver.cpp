@@ -54,8 +54,8 @@ int main(int argc, char *argv[]) {
     }
 
     TcpNetworkManager netman;
-    ProtocolHandler protocol;
-    SessionHandler session(&netman, &protocol);
+    ProtocolHandlerV1 protocol;
+    ServerSessionHandler session(&netman, &protocol);
 
     if (netman.listen(port) < 0) {
         mlog.error("listen error");

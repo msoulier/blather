@@ -20,33 +20,7 @@ int connect_server(TcpNetworkManager &netman, std::string host, std::string port
     }
     mlog.info() << "connected to " << host << ":" << port << std::endl;
 
-    // FIXME: this should be handled by the ProtocolHandler
-    std::string msg("PING");
-    mlog.debug() << "sending " << msg << std::endl;
-    int bytes_sent = netman.write(msg + "\r\n");
-    mlog.debug() << "sent " << bytes_sent << " bytes" << std::endl;
-    if (bytes_sent < 0) {
-        perror("write");
-        return 0;
-    }
-
-    mlog.debug() << "reading response" << std::endl;
-    std::string buffer;
-    int bytes_recv = netman.read(buffer);
-    mlog.debug() << "received " << bytes_recv << " bytes" << std::endl;
-    if (bytes_recv < 0) {
-        perror("read");
-        return 0;
-    }
-
-    mlog.debug() << "msg was " << buffer << std::endl;
-
-    if (buffer == "PONG") {
-        return 1;
-    } else {
-        mlog.error() << "bad response from server: " << buffer << std::endl;
-        return 0;
-    }
+    return 1;
 }
 
 int parse_arguments(int argc, char *argv[]) {
@@ -77,8 +51,8 @@ int main(int argc, char *argv[]) {
     }
 
     TcpNetworkManager netman;
-    ProtocolHandler protocol;
-    SessionHandler session(&netman, &protocol);
+    ProtocolHandlerV1 protocol;
+    ClientSessionHandler session(&netman, &protocol);
 
     if (connect_server(netman, host, port)) {
         mlog.info() << "Connected to server at " << host << ":" << port << std::endl;
@@ -88,6 +62,5 @@ int main(int argc, char *argv[]) {
     }
 
     // Server connection is up, time to start talking.
-    // session.run();
-    return 1;
+    return session.run();
 }

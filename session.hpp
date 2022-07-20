@@ -14,11 +14,31 @@ public:
     ~SessionHandler();
     int run();
     int handle(std::string data);
-private:
+protected:
     NetworkManager *m_manager;
     ProtocolHandler *m_protocol;
 };
 
 std::ostream &operator<<(std::ostream &os, SessionHandler &handler);
+
+class ClientSessionHandler : public SessionHandler {
+public:
+    ClientSessionHandler();
+    ClientSessionHandler(NetworkManager *manager, ProtocolHandler *protocol);
+    ~ClientSessionHandler();
+    int run();
+};
+
+std::ostream &operator<<(std::ostream &os, ClientSessionHandler &handler);
+
+class ServerSessionHandler : public SessionHandler {
+public:
+    ServerSessionHandler();
+    ServerSessionHandler(NetworkManager *manager, ProtocolHandler *protocol);
+    ~ServerSessionHandler();
+    int run();
+};
+
+std::ostream &operator<<(std::ostream &os, ServerSessionHandler &handler);
 
 #endif
