@@ -12,11 +12,12 @@ public:
     SessionHandler();
     SessionHandler(NetworkManager *manager, ProtocolHandler *protocol);
     ~SessionHandler();
-    int run();
+    virtual int run();
     int handle(std::string data);
 protected:
     NetworkManager *m_manager;
     ProtocolHandler *m_protocol;
+    std::string m_partial;
 };
 
 std::ostream &operator<<(std::ostream &os, SessionHandler &handler);

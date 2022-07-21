@@ -33,9 +33,10 @@ ClientSessionHandler::ClientSessionHandler(NetworkManager *manager, ProtocolHand
 ClientSessionHandler::~ClientSessionHandler() {}
 
 int ClientSessionHandler::run() {
+    mlog.debug() << "in ClientSessionHandler::run" << std::endl;
     std::string msg("PING");
     mlog.debug() << "sending " << msg << std::endl;
-    int bytes_sent = m_manager->write(msg + "\r\n");
+    int bytes_sent = m_manager->write(m_protocol->compose(msg));
     mlog.debug() << "sent " << bytes_sent << " bytes" << std::endl;
     if (bytes_sent < 0) {
         perror("write");
@@ -70,11 +71,12 @@ ServerSessionHandler::ServerSessionHandler(NetworkManager *manager, ProtocolHand
 ServerSessionHandler::~ServerSessionHandler() {}
 
 int ServerSessionHandler::run() {
+    mlog.debug() << "in ServerSessionHandler::run" << std::endl;
     std::string buffer;
     ssize_t bytes;
     // Loop until something ends the session.
     for(;;) {
-        std::size_t found = 0;
+        buffer.clear();
         // FIXME: must append to the buffer, not clobber it
         bytes = m_manager->read(buffer);
         if (bytes == 0) {
@@ -84,17 +86,11 @@ int ServerSessionHandler::run() {
             mlog.error() << "read error" << std::endl;
             return 0;
         } else {
-            // Did we receive a full message? Or more?
-            for (;;) {
-                // FIXME: Look for all \r\n delimiters
-                // Need a protocol handler to do this.
-                if ((found = buffer.find("\r\n")) > 0) {
-                    mlog.debug() << "found is " << found << std::endl;
-                    std::string msg = buffer.substr(0, found);
-                    mlog.debug() << "msg is " << msg << std::endl;
-                    handle(msg);
-                }
-                break;
+            m_partial.append(buffer);
+            std::vector<std::string> messages = m_protocol->interpret(m_partial);
+            for (auto msg : messages) {
+                mlog.debug() << "found message " << msg << std::endl;
+                handle(msg);
             }
         }
     }

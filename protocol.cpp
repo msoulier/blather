@@ -1,4 +1,4 @@
-#include "mlogger.hpp"
+#include "logger.hpp"
 #include "protocol.hpp"
 
 ProtocolHandler::ProtocolHandler() {}
@@ -36,8 +36,23 @@ std::string ProtocolHandler::compose(const std::string msg) {
     return composed;
 }
 
+// FIXME: shouldn't this function be virtual
 std::vector<std::string> ProtocolHandler::interpret(std::string &buffer) {
     std::vector<std::string> messages;
+    // Look for all \r\n delimited messages.
+    std::string::size_type n;
+    const std::string delim = "\r\n";
+    for (;;) {
+        n = buffer.find(delim);
+        if (n == std::string::npos) {
+            break;
+        }
+        std::string msg = buffer.substr(0, n);
+        mlog.debug() << "interpret found: " << msg << std::endl;
+        messages.push_back(msg);
+        buffer = buffer.substr(n+delim.size());
+        mlog.debug() << "interpret buffer now: " << buffer << std::endl;
+    }
     return messages;
 }
 
