@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <thread>
 
 #include "logger.hpp"
 #include "protocol.hpp"
@@ -9,12 +10,15 @@
 
 int port = 0;
 
-int accept_connections(TcpNetworkManager &netman, SessionHandler &session) {
+int accept_connections(TcpNetworkManager &netman, ProtocolHandler &protocol) {
     // FIXME: must evolve to handling multiple connections
     mlog.debug() << "going into accept" << std::endl;
     if (netman.accept()) {
+        ServerSessionHandler session(&netman, &protocol);
         mlog.info() << "accepted network connection - starting session" << std::endl;
-        return session.run();
+        std::thread session_thread(&ServerSessionHandler::run, &session);
+        session_thread.join();
+        return 1;
     } else {
         mlog.warn() << "failed to set up network connection" << std::endl;
         return 0;
@@ -55,7 +59,6 @@ int main(int argc, char *argv[]) {
 
     TcpNetworkManager netman;
     ProtocolHandlerV1 protocol;
-    ServerSessionHandler session(&netman, &protocol);
 
     if (netman.listen(port) < 0) {
         mlog.error("listen error");
@@ -65,7 +68,7 @@ int main(int argc, char *argv[]) {
 
     // FIXME: need to spawn a thread for each connection
     for (;;) {
-        if (accept_connections(netman, session)) {
+        if (accept_connections(netman, protocol)) {
             mlog.debug() << "Successfully finished handling connection" << std::endl;
         } else {
             mlog.error() << "Error handling connection" << std::endl;

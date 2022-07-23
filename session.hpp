@@ -12,8 +12,11 @@ public:
     SessionHandler();
     SessionHandler(NetworkManager *manager, ProtocolHandler *protocol);
     ~SessionHandler();
+    // Disable the copy constructor and the assignment operator.
+    SessionHandler(SessionHandler &source) = delete;
+    SessionHandler& operator=(const SessionHandler& source) = delete;
     virtual int run();
-    int handle(std::string data);
+    virtual int handle(std::string data);
 protected:
     NetworkManager *m_manager;
     ProtocolHandler *m_protocol;
@@ -27,7 +30,11 @@ public:
     ClientSessionHandler();
     ClientSessionHandler(NetworkManager *manager, ProtocolHandler *protocol);
     ~ClientSessionHandler();
+    // Disable the copy constructor and the assignment operator.
+    ClientSessionHandler(ClientSessionHandler &source) = delete;
+    ClientSessionHandler& operator=(const ClientSessionHandler& source) = delete;
     int run();
+    int handle(std::string data);
 };
 
 std::ostream &operator<<(std::ostream &os, ClientSessionHandler &handler);
@@ -37,7 +44,11 @@ public:
     ServerSessionHandler();
     ServerSessionHandler(NetworkManager *manager, ProtocolHandler *protocol);
     ~ServerSessionHandler();
+    // Disable the copy constructor and the assignment operator.
+    ServerSessionHandler(ServerSessionHandler &source) = delete;
+    ServerSessionHandler& operator=(const ServerSessionHandler& source) = delete;
     int run();
+    int handle(std::string data);
 };
 
 std::ostream &operator<<(std::ostream &os, ServerSessionHandler &handler);

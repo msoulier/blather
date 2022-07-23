@@ -17,11 +17,8 @@ int SessionHandler::run() {
 }
 
 int SessionHandler::handle(std::string data) {
-    mlog.info() << "SessionHandler::handle: " << data << std::endl;
-    if (data == "PING") {
-        m_manager->write("PONG\r\n");
-    }
-    return 1;
+    throw std::runtime_error("should not be called directly");
+    return 0;
 }
 
 ClientSessionHandler::ClientSessionHandler() {}
@@ -33,6 +30,7 @@ ClientSessionHandler::ClientSessionHandler(NetworkManager *manager, ProtocolHand
 ClientSessionHandler::~ClientSessionHandler() {}
 
 int ClientSessionHandler::run() {
+    // Kickstart the session by testing the connection to the server.
     mlog.debug() << "in ClientSessionHandler::run" << std::endl;
     std::string msg("PING");
     mlog.debug() << "sending " << msg << std::endl;
@@ -43,21 +41,36 @@ int ClientSessionHandler::run() {
         return 0;
     }
 
-    mlog.debug() << "reading response" << std::endl;
     std::string buffer;
-    int bytes_recv = m_manager->read(buffer);
-    mlog.debug() << "received " << bytes_recv << " bytes" << std::endl;
-    if (bytes_recv < 0) {
-        perror("read");
-        return 0;
+    ssize_t bytes;
+    // Loop until something ends the session.
+    for(;;) {
+        buffer.clear();
+        // FIXME: must go into select on network and console fds
+        bytes = m_manager->read(buffer);
+        if (bytes == 0) {
+            mlog.debug() << "read 0 bytes" << std::endl;
+            return 1;
+        } else if (bytes < 0) {
+            mlog.error() << "read error" << std::endl;
+            return 0;
+        } else {
+            m_partial.append(buffer);
+            std::vector<std::string> messages = m_protocol->interpret(m_partial);
+            for (auto msg : messages) {
+                mlog.debug() << "found message " << msg << std::endl;
+                handle(msg);
+            }
+        }
     }
+}
 
-    mlog.debug() << "msg was " << buffer << std::endl;
-
-    if (buffer == "PONG") {
+int ClientSessionHandler::handle(std::string data) {
+    mlog.info() << "ClientSessionHandler::handle: " << data << std::endl;
+    if (data == "PONG") {
         return 1;
     } else {
-        mlog.error() << "bad response from server: " << buffer << std::endl;
+        mlog.error() << "ClientSessionHandler::handle: unknown message '" << data << "'" << std::endl;
         return 0;
     }
 }
@@ -77,7 +90,7 @@ int ServerSessionHandler::run() {
     // Loop until something ends the session.
     for(;;) {
         buffer.clear();
-        // FIXME: must append to the buffer, not clobber it
+        // FIXME: must go into select on all sessions' fds
         bytes = m_manager->read(buffer);
         if (bytes == 0) {
             mlog.debug() << "read 0 bytes" << std::endl;
@@ -93,5 +106,16 @@ int ServerSessionHandler::run() {
                 handle(msg);
             }
         }
+    }
+}
+
+int ServerSessionHandler::handle(std::string data) {
+    mlog.info() << "ServerSessionHandler::handle: " << data << std::endl;
+    if (data == "PING") {
+        m_manager->write("PONG\r\n");
+        return 1;
+    } else {
+        mlog.error() << "ClientSessionHandler::handle: unknown message '" << data << "'" << std::endl;
+        return 0;
     }
 }
