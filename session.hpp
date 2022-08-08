@@ -1,6 +1,12 @@
 #ifndef _SESSION_H_
 #define _SESSION_H_
 
+#include <atomic>
+
+#include "network.hpp"
+
+extern std::atomic<bool> g_shutdown_asap;
+
 /*
  * The SessionHandler is responsible for handling the NetworkManager
  * at a higher level, either as a client or as a server. It has a main
@@ -10,7 +16,7 @@
 class SessionHandler {
 public:
     SessionHandler();
-    SessionHandler(NetworkManager *manager, ProtocolHandler *protocol);
+    SessionHandler(NetworkManager *manager, ProtocolHandler *protocol, SESSIONID sessionid);
     ~SessionHandler();
     // Disable the copy constructor and the assignment operator.
     SessionHandler(SessionHandler &source) = delete;
@@ -21,6 +27,7 @@ protected:
     NetworkManager *m_manager;
     ProtocolHandler *m_protocol;
     std::string m_partial;
+    SESSIONID m_sessionid;
 };
 
 std::ostream &operator<<(std::ostream &os, SessionHandler &handler);
@@ -28,7 +35,7 @@ std::ostream &operator<<(std::ostream &os, SessionHandler &handler);
 class ClientSessionHandler : public SessionHandler {
 public:
     ClientSessionHandler();
-    ClientSessionHandler(NetworkManager *manager, ProtocolHandler *protocol);
+    ClientSessionHandler(NetworkManager *manager, ProtocolHandler *protocol, SESSIONID sessionid);
     ~ClientSessionHandler();
     // Disable the copy constructor and the assignment operator.
     ClientSessionHandler(ClientSessionHandler &source) = delete;
@@ -42,7 +49,7 @@ std::ostream &operator<<(std::ostream &os, ClientSessionHandler &handler);
 class ServerSessionHandler : public SessionHandler {
 public:
     ServerSessionHandler();
-    ServerSessionHandler(NetworkManager *manager, ProtocolHandler *protocol);
+    ServerSessionHandler(NetworkManager *manager, ProtocolHandler *protocol, SESSIONID sessionid);
     ~ServerSessionHandler();
     // Disable the copy constructor and the assignment operator.
     ServerSessionHandler(ServerSessionHandler &source) = delete;

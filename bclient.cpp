@@ -10,17 +10,18 @@
 std::string host;
 std::string port;
 
-int connect_server(TcpNetworkManager &netman, std::string host, std::string port) {
+SESSIONID connect_server(TcpNetworkManager &netman, std::string host, std::string port) {
+    SESSIONID sessionid = 0;
     mlog.info() << "blather client told to connect to "
                 << host << ":" << port << std::endl;
 
-    if (netman.connect_to(host, port) < 0) {
+    if ( (sessionid = netman.connect_to(host, port)) ) {
         mlog.error("connection error");
         return 0;
     }
     mlog.info() << "connected to " << host << ":" << port << std::endl;
 
-    return 1;
+    return sessionid;
 }
 
 int parse_arguments(int argc, char *argv[]) {
@@ -52,14 +53,17 @@ int main(int argc, char *argv[]) {
 
     TcpNetworkManager netman;
     ProtocolHandlerV1 protocol;
-    ClientSessionHandler session(&netman, &protocol);
 
-    if (connect_server(netman, host, port)) {
+    SESSIONID client_sessionid = 0;
+
+    if ( (client_sessionid = connect_server(netman, host, port)) ) {
         mlog.info() << "Connected to server at " << host << ":" << port << std::endl;
     } else {
         mlog.error() << "Failed to connect to server at " << host << ":" << port << std::endl;
         return 1;
     }
+
+    ClientSessionHandler session(&netman, &protocol, client_sessionid);
 
     // Server connection is up, time to start talking.
     return session.run();

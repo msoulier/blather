@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <thread>
+#include <vector>
 
 #include "logger.hpp"
 #include "protocol.hpp"
@@ -8,16 +9,17 @@
 
 #define VERSION "0.1"
 
-int port = 0;
+std::vector<std::thread*> g_threads;
+int g_port = 0;
 
 int accept_connections(TcpNetworkManager &netman, ProtocolHandler &protocol) {
-    // FIXME: must evolve to handling multiple connections
+    SESSIONID sessionid = 0;
     mlog.debug() << "going into accept" << std::endl;
-    if (netman.accept()) {
-        ServerSessionHandler session(&netman, &protocol);
+    if ( (sessionid = netman.accept()) ) {
+        ServerSessionHandler session(&netman, &protocol, sessionid);
         mlog.info() << "accepted network connection - starting session" << std::endl;
         std::thread session_thread(&ServerSessionHandler::run, &session);
-        session_thread.join();
+        g_threads.push_back(&session_thread);
         return 1;
     } else {
         mlog.warn() << "failed to set up network connection" << std::endl;
@@ -35,8 +37,8 @@ int parse_arguments(int argc, char *argv[]) {
         if ((arg == "-d") || (arg == "--debug")) {
             mlog.setLevel(MLoggerVerbosity::debug);
         } else {
-            port = atoi(argv[1]);
-            if (port == 0) {
+            g_port = atoi(argv[1]);
+            if (g_port == 0) {
                 mlog.error() << "listen port must be a positive integer" << std::endl;
                 return 0;
             }
@@ -51,7 +53,7 @@ int main(int argc, char *argv[]) {
     mlog.info("blather server version %s", VERSION);
 
     mlog.info() << "blather server told to listen on "
-                << "0.0.0.0" << ":" << port << std::endl;
+                << "0.0.0.0" << ":" << g_port << std::endl;
 
     if (! parse_arguments(argc, argv)) {
         return 1;
@@ -60,11 +62,11 @@ int main(int argc, char *argv[]) {
     TcpNetworkManager netman;
     ProtocolHandlerV1 protocol;
 
-    if (netman.listen(port) < 0) {
+    if (netman.listen(g_port) < 0) {
         mlog.error("listen error");
         return 1;
     }
-    mlog.info() << "listening on " << "0.0.0.0" << ":" << port << std::endl;
+    mlog.info() << "listening on " << "0.0.0.0" << ":" << g_port << std::endl;
 
     // FIXME: need to spawn a thread for each connection
     for (;;) {

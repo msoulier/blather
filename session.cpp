@@ -3,11 +3,14 @@
 #include "session.hpp"
 #include "logger.hpp"
 
+std::atomic<bool> g_shutdown_asap{false};
+
 SessionHandler::SessionHandler() {}
 
-SessionHandler::SessionHandler(NetworkManager *manager, ProtocolHandler *protocol) :
+SessionHandler::SessionHandler(NetworkManager *manager, ProtocolHandler *protocol, SESSIONID sessionid) :
     m_manager(manager),
-    m_protocol(protocol)
+    m_protocol(protocol),
+    m_sessionid(sessionid)
 {}
 
 SessionHandler::~SessionHandler() {}
@@ -23,8 +26,8 @@ int SessionHandler::handle(std::string data) {
 
 ClientSessionHandler::ClientSessionHandler() {}
 
-ClientSessionHandler::ClientSessionHandler(NetworkManager *manager, ProtocolHandler *protocol) :
-    SessionHandler(manager, protocol)
+ClientSessionHandler::ClientSessionHandler(NetworkManager *manager, ProtocolHandler *protocol, SESSIONID sessionid) :
+    SessionHandler(manager, protocol, sessionid)
 {}
 
 ClientSessionHandler::~ClientSessionHandler() {}
@@ -45,6 +48,11 @@ int ClientSessionHandler::run() {
     ssize_t bytes;
     // Loop until something ends the session.
     for(;;) {
+        // If we're supposed to shutdown, then do so.
+        if (g_shutdown_asap) {
+            mlog.info() << "ClientSessionHandler::run shutting down" << std::endl;
+            break;
+        }
         buffer.clear();
         // FIXME: must go into select on network and console fds
         bytes = m_manager->read(buffer);
@@ -63,6 +71,8 @@ int ClientSessionHandler::run() {
             }
         }
     }
+    // FIXME: shutdown the network connection
+    return 1;
 }
 
 int ClientSessionHandler::handle(std::string data) {
@@ -77,8 +87,8 @@ int ClientSessionHandler::handle(std::string data) {
 
 ServerSessionHandler::ServerSessionHandler() {}
 
-ServerSessionHandler::ServerSessionHandler(NetworkManager *manager, ProtocolHandler *protocol) :
-    SessionHandler(manager, protocol)
+ServerSessionHandler::ServerSessionHandler(NetworkManager *manager, ProtocolHandler *protocol, SESSIONID sessionid) :
+    SessionHandler(manager, protocol, sessionid)
 {}
 
 ServerSessionHandler::~ServerSessionHandler() {}

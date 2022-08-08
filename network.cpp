@@ -17,10 +17,9 @@
  */
 
 NetworkManager::NetworkManager() :
-    m_sockfd(0),
-    m_serverfd(0),
     m_bind_port(0),
-    m_mode(NetworkManagerMode::UNSET)
+    m_mode(NetworkManagerMode::UNSET),
+    m_latest_sessionid(0)
 {}
 
 NetworkManager::~NetworkManager()
@@ -35,14 +34,16 @@ void NetworkManager::set_mode(NetworkManagerMode mode) {
     }
 }
 
-ssize_t NetworkManager::write(const std::string msg) {
+ssize_t NetworkManager::write(const std::string msg, SESSIONID sessionid) {
     assert( m_mode != NetworkManagerMode::UNSET );
     int fd;
-    if (m_mode == NetworkManagerMode::CLIENT) {
-        fd = m_sockfd;
+    if (m_sessionmap.count(sessionid) == 1) {
+        fd = m_sessionmap[sessionid];
     } else {
-        fd = m_serverfd;
+        mlog.error() << "write called with unknown sessionid " << sessionid << std::endl;
+        return -1;
     }
+
     if (fd == 0) {
         mlog.warn() << "write called on a closed socket" << std::endl;
         return -1;
@@ -52,13 +53,14 @@ ssize_t NetworkManager::write(const std::string msg) {
     return bytes;
 }
 
-ssize_t NetworkManager::read(std::string &buffer) {
+ssize_t NetworkManager::read(std::string &buffer, SESSIONID sessionid) {
     assert( m_mode != NetworkManagerMode::UNSET );
     int fd;
-    if (m_mode == NetworkManagerMode::CLIENT) {
-        fd = m_sockfd;
+    if (m_sessionmap.count(sessionid) == 1) {
+        fd = m_sessionmap[sessionid];
     } else {
-        fd = m_serverfd;
+        mlog.error() << "read called with unknown sessionid " << sessionid << std::endl;
+        return -1;
     }
     char cbuffer[MAX_BUFFER];
     size_t size = MAX_BUFFER;
@@ -82,7 +84,7 @@ TcpNetworkManager::TcpNetworkManager()
 TcpNetworkManager::~TcpNetworkManager()
 {}
 
-int TcpNetworkManager::connect_to(std::string host, std::string port)
+SESSIONID TcpNetworkManager::connect_to(std::string host, std::string port)
 {
     set_mode(NetworkManagerMode::CLIENT);
     mlog.debug() << "connect to " << host << ":" << port << std::endl;
@@ -118,6 +120,7 @@ int TcpNetworkManager::connect_to(std::string host, std::string port)
         }
         mlog.info("successful connection");
         // FIXME: set the m_bind_port after connecting
+        m_sessionmap[++m_latest_sessionid] = m_sockfd;
         break;
     }
 
@@ -127,7 +130,7 @@ int TcpNetworkManager::connect_to(std::string host, std::string port)
         goto CLEANUP;
     }
 
-    rv = 1;
+    rv = m_latest_sessionid;
 
 CLEANUP:
     if (result != NULL)
@@ -167,18 +170,20 @@ int TcpNetworkManager::listen(int port) {
     return 1;
 }
 
-int TcpNetworkManager::accept() {
+SESSIONID TcpNetworkManager::accept() {
     socklen_t len;
     struct sockaddr_in client;
+    int serverfd = 0;
 
     len = sizeof(client);
 
     // Accept the data packet from client and verification
-    m_serverfd = ::accept(m_sockfd, (struct sockaddr*)&client, &len);
-    if (m_serverfd < 0) {
+    serverfd = ::accept(m_sockfd, (struct sockaddr*)&client, &len);
+    if (serverfd < 0) {
         perror("server accept failed...\n");
         return 0;
     }
+    m_sessionmap[++m_latest_sessionid] = serverfd;
 
-    return 1;
+    return m_latest_sessionid;
 }
