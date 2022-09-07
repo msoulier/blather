@@ -1,4 +1,7 @@
 #include <errno.h>
+#include <signal.h>
+#include <unistd.h>
+
 #include "logger.hpp"
 #include "protocol.hpp"
 #include "network.hpp"
@@ -42,10 +45,19 @@ int parse_arguments(int argc, char *argv[]) {
     return 1;
 }
 
+void shutdown_handler(int signum) {
+    // Set the atomic boolean defined in session.hpp
+    write(2, "===> SHUTDOWN\n", 13);
+    g_shutdown_asap = true;
+}
+
 int main(int argc, char *argv[]) {
     mlog.setDefaults();
     mlog.setLevel(MLoggerVerbosity::info);
     mlog.info("blather client version %s", VERSION);
+
+    signal(SIGTERM, &shutdown_handler);
+    signal(SIGINT, &shutdown_handler);
 
     if (! parse_arguments(argc, argv)) {
         return 1;

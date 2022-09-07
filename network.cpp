@@ -54,6 +54,7 @@ ssize_t NetworkManager::write(const std::string msg, SESSIONID sessionid) {
 }
 
 ssize_t NetworkManager::read(std::string &buffer, SESSIONID sessionid) {
+    mlog.debug() << "NetworkManager::read on sessionid " << sessionid << std::endl;
     assert( m_mode != NetworkManagerMode::UNSET );
     int fd;
     if (m_sessionmap.count(sessionid) == 1) {
@@ -93,6 +94,8 @@ SESSIONID TcpNetworkManager::connect_to(std::string host, std::string port)
     struct addrinfo *result = NULL;
     struct addrinfo *rp = NULL;
     int s, rv;
+    struct sockaddr_in clientsock;
+    socklen_t clientsock_len = sizeof(struct sockaddr_in);
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET; // AF_UNSPEC for v4 or v6
@@ -118,7 +121,14 @@ SESSIONID TcpNetworkManager::connect_to(std::string host, std::string port)
             mlog.error("connect: %s", strerror(errno));
             continue;
         }
-        mlog.info("successful connection");
+        mlog.info() << "successful connection" << std::endl;
+
+        if (getsockname(m_sockfd, (struct sockaddr*)&clientsock, &clientsock_len) < 0) {
+            mlog.warn() << "failed to resolve local address info: " << strerror(errno) << std::endl;
+        } else {
+            mlog.info() << "local port is " << ntohs(clientsock.sin_port) << std::endl;
+        }
+            
         // FIXME: set the m_bind_port after connecting
         m_sessionmap[++m_latest_sessionid] = m_sockfd;
         break;
@@ -174,6 +184,7 @@ SESSIONID TcpNetworkManager::accept() {
     socklen_t len;
     struct sockaddr_in client;
     int serverfd = 0;
+    char client_address[INET_ADDRSTRLEN];
 
     len = sizeof(client);
 
@@ -184,6 +195,11 @@ SESSIONID TcpNetworkManager::accept() {
         return 0;
     }
     m_sessionmap[++m_latest_sessionid] = serverfd;
+    if (inet_ntop(AF_INET, &(client.sin_addr), client_address, INET_ADDRSTRLEN) == NULL) {
+        mlog.warn() << "failed to resolve client address: " << strerror(errno) << std::endl;
+        strcpy(client_address, "Unknown");
+    }
+    mlog.info() << "new connection from " << client_address << ":" << ntohs(client.sin_port) << std::endl;
 
     return m_latest_sessionid;
 }

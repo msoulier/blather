@@ -11,7 +11,9 @@ SessionHandler::SessionHandler(NetworkManager *manager, ProtocolHandler *protoco
     m_manager(manager),
     m_protocol(protocol),
     m_sessionid(sessionid)
-{}
+{
+    mlog.debug() << "starting session with sessionid " << m_sessionid << std::endl;
+}
 
 SessionHandler::~SessionHandler() {}
 
@@ -94,14 +96,16 @@ ServerSessionHandler::ServerSessionHandler(NetworkManager *manager, ProtocolHand
 ServerSessionHandler::~ServerSessionHandler() {}
 
 int ServerSessionHandler::run() {
-    mlog.debug() << "in ServerSessionHandler::run" << std::endl;
+    mlog.debug() << "in ServerSessionHandler::run - m_sessionid is " << m_sessionid << std::endl;
     std::string buffer;
     ssize_t bytes;
     // Loop until something ends the session.
     for(;;) {
         buffer.clear();
-        // FIXME: must go into select on all sessions' fds
-        bytes = m_manager->read(buffer);
+        if (g_shutdown_asap) {
+            break;
+        }
+        bytes = m_manager->read(buffer, m_sessionid);
         if (bytes == 0) {
             mlog.debug() << "read 0 bytes" << std::endl;
             return 1;
@@ -109,6 +113,7 @@ int ServerSessionHandler::run() {
             mlog.error() << "read error" << std::endl;
             return 0;
         } else {
+            mlog.debug() << "read " << bytes << " bytes" << std::endl;
             m_partial.append(buffer);
             std::vector<std::string> messages = m_protocol->interpret(m_partial);
             for (auto msg : messages) {
@@ -117,6 +122,7 @@ int ServerSessionHandler::run() {
             }
         }
     }
+    return 0;
 }
 
 int ServerSessionHandler::handle(std::string data) {
