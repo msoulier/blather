@@ -19,6 +19,8 @@ SESSIONID connect_server(TcpNetworkManager &netman, std::string host, std::strin
                 << host << ":" << port << std::endl;
 
     if ( (sessionid = netman.connect_to(host, port)) ) {
+        mlog.debug() << "netman sessionid is " << sessionid << std::endl;
+    } else {
         mlog.error("connection error");
         return 0;
     }
@@ -29,7 +31,7 @@ SESSIONID connect_server(TcpNetworkManager &netman, std::string host, std::strin
 
 int parse_arguments(int argc, char *argv[]) {
     if (argc < 3) {
-        mlog.error("Usage: %s <host> <port>", argv[0]);
+        mlog.error("Usage: %s [-d|--debug] <host> <port>", argv[0]);
         return 0;
     }
     for (int i = 1; i < argc; ++i) {
