@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <unistd.h>
+#include <thread>
 
 #include "logger.hpp"
 #include "protocol.hpp"
@@ -12,6 +13,8 @@
 // Set by parse_arguments
 std::string host;
 std::string port;
+// The session thread.
+std::thread *g_session;
 
 SESSIONID connect_server(TcpNetworkManager &netman, std::string host, std::string port) {
     SESSIONID sessionid = 0;
@@ -47,10 +50,31 @@ int parse_arguments(int argc, char *argv[]) {
     return 1;
 }
 
+void shutdown() {
+    alarm(1);
+    g_shutdown_asap = true;
+}
+
 void shutdown_handler(int signum) {
     // Set the atomic boolean defined in session.hpp
     write(2, "===> SHUTDOWN\n", 13);
-    g_shutdown_asap = true;
+    shutdown();
+}
+
+int handle_user() {
+    std::string command;
+    for (;;) {
+        // FIXME: pull in gnu readline
+        std::cout << "> " << std::flush;
+        //std::cin >> command;
+        std::getline(std::cin, command);
+        mlog.debug() << "Read command: " << command << std::endl;
+        // FIXME: need user session handler
+        if (command == "quit") {
+            shutdown();
+            return 0;
+        }
+    }
 }
 
 int main(int argc, char *argv[]) {
@@ -78,7 +102,9 @@ int main(int argc, char *argv[]) {
     }
 
     ClientSessionHandler session(&netman, &protocol, client_sessionid);
+    // Run the session in its own thread, and let the main thread handle user interaction.
+    g_session = new std::thread(&ClientSessionHandler::run, &session);
 
     // Server connection is up, time to start talking.
-    return session.run();
+    return handle_user();
 }
