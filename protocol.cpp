@@ -1,11 +1,76 @@
 #include "logger.hpp"
 #include "protocol.hpp"
 
-ProtocolHandler::ProtocolHandler() {}
-
-ProtocolHandler::ProtocolHandler(std::map<std::string,int> messages) :
-    m_messages(messages)
+BlatherMessage::BlatherMessage()
 {}
+
+BlatherMessage::BlatherMessage(BlatherMessageType mtype, std::string payload)
+    : m_type(mtype),
+      m_payload(payload)
+{}
+
+BlatherMessage::~BlatherMessage()
+{}
+
+std::string BlatherMessage::print() {
+    std::stringstream stream;
+    stream << "BlatherMessage: " << m_type << " " << m_payload << std::endl;
+    return stream.str();
+}
+
+std::string BlatherMessage::transmit() {
+    std::string onwire;
+    onwire = message_map.at(m_type) + " " + m_payload + "\r\n";
+    return onwire;
+}
+
+void BlatherMessage::receive(std::string data) {
+    // Find the first space. Everything up to there is the message type.
+    size_t index = data.find_first_of(" ");
+    if (index == std::string::npos) {
+        // No spaces found.
+        throw std::runtime_error("Invalid message - no type header");
+    }
+    std::string smtype(data.substr(0, index));
+    bool found = false;
+    for (const auto& [key, value] : message_map) {
+        if (smtype == value) {
+            m_type = key;
+            found = true;
+            break;
+        }
+    }
+    if (! found) {
+        throw std::runtime_error("Invalid message - invalid type");
+    }
+    m_payload = data.substr(index);
+}
+
+void BlatherMessage::set_type(BlatherMessageType mtype)
+{
+    m_type = mtype;
+}
+
+void BlatherMessage::set_payload(std::string payload)
+{
+    m_payload = payload;
+}
+
+BlatherMessageType BlatherMessage::get_type()
+{
+    return m_type;
+}
+
+std::string BlatherMessage::get_payload()
+{
+    return m_payload;
+}
+
+std::ostream &operator<<(std::ostream &stream, BlatherMessage &message) {
+    return stream << message.print();
+} 
+
+ProtocolHandler::ProtocolHandler() {}
 
 ProtocolHandler::ProtocolHandler(ProtocolHandler &source) {
     Copy(source);
@@ -20,25 +85,9 @@ void ProtocolHandler::operator=(ProtocolHandler &source) {
 void ProtocolHandler::Copy(ProtocolHandler &source) {
 }
 
-void ProtocolHandler::Print(std::ostream *os) {
-    *os << "ProtocolHandler: ";
-}
-
-std::string ProtocolHandler::compose(const std::string msg) {
-    // Right now the protocol is simple. Append \r\n as a delimiter and
-    // make sure that it is a valid message.
-    std::string composed;
-    if (is_valid(msg)) {
-        composed = msg + "\r\n";
-    } else {
-        throw std::runtime_error("invalid message");
-    }
-    return composed;
-}
-
 // FIXME: shouldn't this function be virtual
-std::vector<std::string> ProtocolHandler::interpret(std::string &buffer) {
-    std::vector<std::string> messages;
+std::vector<BlatherMessage> ProtocolHandler::interpret(std::string &buffer) {
+    std::vector<BlatherMessage> messages;
     // Look for all \r\n delimited messages.
     std::string::size_type n;
     const std::string delim = "\r\n";
@@ -49,24 +98,17 @@ std::vector<std::string> ProtocolHandler::interpret(std::string &buffer) {
         }
         std::string msg = buffer.substr(0, n);
         mlog.debug() << "interpret found: " << msg << std::endl;
-        messages.push_back(msg);
+        // Turn the raw data into a BlatherMessage object.
+        BlatherMessage message;
+        message.receive(msg);
+        messages.push_back(message);
         buffer = buffer.substr(n+delim.size());
         mlog.debug() << "interpret buffer now: " << buffer << std::endl;
     }
     return messages;
 }
 
-bool ProtocolHandler::is_valid(std::string msg) {
-    auto it = m_messages.find(msg);
-    if (it == m_messages.end()) {
-        return false;
-    } else {
-        return true;
-    }
-}
-
-ProtocolHandlerV1::ProtocolHandlerV1() :
-    ProtocolHandler( {{"PING", 1}, {"PONG", 1}} )
+ProtocolHandlerV1::ProtocolHandlerV1()
 {}
 
 ProtocolHandlerV1::~ProtocolHandlerV1()

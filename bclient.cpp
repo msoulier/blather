@@ -61,7 +61,7 @@ void shutdown_handler(int signum) {
     shutdown();
 }
 
-int handle_user() {
+int handle_user(ClientSessionHandler &session) {
     std::string command;
     for (;;) {
         // FIXME: pull in gnu readline
@@ -74,6 +74,7 @@ int handle_user() {
             shutdown();
             return 0;
         }
+        session.say(command);
     }
 }
 
@@ -106,5 +107,5 @@ int main(int argc, char *argv[]) {
     g_session = new std::thread(&ClientSessionHandler::run, &session);
 
     // Server connection is up, time to start talking.
-    return handle_user();
+    return handle_user(session);
 }

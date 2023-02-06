@@ -17,11 +17,22 @@ SessionHandler::SessionHandler(NetworkManager *manager, ProtocolHandler *protoco
 
 SessionHandler::~SessionHandler() {}
 
+int SessionHandler::say(std::string data) {
+    BlatherMessage message(BlatherMessageType::SAY, data);
+    int bytes_sent = m_manager->write(message.transmit());
+    mlog.debug() << "sent " << bytes_sent << " bytes" << std::endl;
+    if (bytes_sent < 0) {
+        perror("write");
+        return 0;
+    }
+    return bytes_sent;
+}
+
 int SessionHandler::run() {
     throw std::runtime_error("should not be called directly");
 }
 
-int SessionHandler::handle(std::string data) {
+int SessionHandler::handle(BlatherMessage message) {
     throw std::runtime_error("should not be called directly");
     return 0;
 }
@@ -39,7 +50,8 @@ int ClientSessionHandler::run() {
     mlog.debug() << "in ClientSessionHandler::run" << std::endl;
     std::string msg("PING");
     mlog.debug() << "sending " << msg << std::endl;
-    int bytes_sent = m_manager->write(m_protocol->compose(msg));
+    BlatherMessage message(BlatherMessageType::PING, msg);
+    int bytes_sent = m_manager->write(message.transmit());
     mlog.debug() << "sent " << bytes_sent << " bytes" << std::endl;
     if (bytes_sent < 0) {
         perror("write");
@@ -66,7 +78,7 @@ int ClientSessionHandler::run() {
             return 0;
         } else {
             m_partial.append(buffer);
-            std::vector<std::string> messages = m_protocol->interpret(m_partial);
+            std::vector<BlatherMessage> messages = m_protocol->interpret(m_partial);
             for (auto msg : messages) {
                 mlog.debug() << "found message " << msg << std::endl;
                 handle(msg);
@@ -77,12 +89,12 @@ int ClientSessionHandler::run() {
     return 1;
 }
 
-int ClientSessionHandler::handle(std::string data) {
-    mlog.info() << "ClientSessionHandler::handle: " << data << std::endl;
-    if (data == "PONG") {
+int ClientSessionHandler::handle(BlatherMessage message) {
+    mlog.info() << "ClientSessionHandler::handle: " << message << std::endl;
+    if (message.get_type() == BlatherMessageType::PONG) {
         return 1;
     } else {
-        mlog.error() << "ClientSessionHandler::handle: unknown message '" << data << "'" << std::endl;
+        mlog.error() << "ClientSessionHandler::handle: unknown message '" << message << "'" << std::endl;
         return 0;
     }
 }
@@ -115,7 +127,7 @@ int ServerSessionHandler::run() {
         } else {
             mlog.debug() << "read " << bytes << " bytes" << std::endl;
             m_partial.append(buffer);
-            std::vector<std::string> messages = m_protocol->interpret(m_partial);
+            std::vector<BlatherMessage> messages = m_protocol->interpret(m_partial);
             for (auto msg : messages) {
                 mlog.debug() << "found message " << msg << std::endl;
                 handle(msg);
@@ -125,13 +137,14 @@ int ServerSessionHandler::run() {
     return 0;
 }
 
-int ServerSessionHandler::handle(std::string data) {
-    mlog.info() << "ServerSessionHandler::handle: " << data << std::endl;
-    if (data == "PING") {
-        m_manager->write("PONG\r\n");
+int ServerSessionHandler::handle(BlatherMessage message) {
+    mlog.info() << "ServerSessionHandler::handle: " << message << std::endl;
+    if (message.get_type() == BlatherMessageType::PING) {
+        BlatherMessage message(BlatherMessageType::PONG, "PONG");
+        m_manager->write(message.transmit());
         return 1;
     } else {
-        mlog.error() << "ClientSessionHandler::handle: unknown message '" << data << "'" << std::endl;
+        mlog.error() << "ClientSessionHandler::handle: unknown message '" << message << "'" << std::endl;
         return 0;
     }
 }

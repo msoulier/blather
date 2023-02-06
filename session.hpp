@@ -21,8 +21,9 @@ public:
     // Disable the copy constructor and the assignment operator.
     SessionHandler(SessionHandler &source) = delete;
     SessionHandler& operator=(const SessionHandler& source) = delete;
+    int say(std::string data);
     virtual int run();
-    virtual int handle(std::string data);
+    virtual int handle(BlatherMessage message);
 protected:
     NetworkManager *m_manager;
     ProtocolHandler *m_protocol;
@@ -41,7 +42,7 @@ public:
     ClientSessionHandler(ClientSessionHandler &source) = delete;
     ClientSessionHandler& operator=(const ClientSessionHandler& source) = delete;
     int run();
-    int handle(std::string data);
+    int handle(BlatherMessage message);
 };
 
 std::ostream &operator<<(std::ostream &os, ClientSessionHandler &handler);
@@ -55,7 +56,7 @@ public:
     ServerSessionHandler(ServerSessionHandler &source) = delete;
     ServerSessionHandler& operator=(const ServerSessionHandler& source) = delete;
     int run();
-    int handle(std::string data);
+    int handle(BlatherMessage message);
 };
 
 std::ostream &operator<<(std::ostream &os, ServerSessionHandler &handler);
