@@ -6,7 +6,8 @@
 
 enum BlatherMessageType
 {
-    PING = 0,
+    INVALID = 0,
+    PING,
     PONG,
     SAY
 };
@@ -38,6 +39,7 @@ public:
     std::string get_payload();
 
 private:
+    BlatherMessageType message_map_to_type(std::string smtype);
     BlatherMessageType m_type;
     std::string m_payload;
 };

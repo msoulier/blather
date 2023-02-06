@@ -14,14 +14,24 @@ BlatherMessage::~BlatherMessage()
 
 std::string BlatherMessage::print() {
     std::stringstream stream;
-    stream << "BlatherMessage: " << m_type << " " << m_payload << std::endl;
+    stream << "BlatherMessage: " << "[" << message_map.at(m_type) << "]" << " " << m_payload << std::endl;
     return stream.str();
 }
 
 std::string BlatherMessage::transmit() {
     std::string onwire;
+    mlog.debug() << "transmit message: " << *this << std::endl;
     onwire = message_map.at(m_type) + " " + m_payload + "\r\n";
     return onwire;
+}
+
+BlatherMessageType BlatherMessage::message_map_to_type(std::string smtype) {
+    for (const auto& [key, value] : message_map) {
+        if (smtype == value) {
+            return key;
+        }
+    }
+    return BlatherMessageType::INVALID;
 }
 
 void BlatherMessage::receive(std::string data) {
@@ -32,15 +42,8 @@ void BlatherMessage::receive(std::string data) {
         throw std::runtime_error("Invalid message - no type header");
     }
     std::string smtype(data.substr(0, index));
-    bool found = false;
-    for (const auto& [key, value] : message_map) {
-        if (smtype == value) {
-            m_type = key;
-            found = true;
-            break;
-        }
-    }
-    if (! found) {
+    m_type = message_map_to_type(smtype);
+    if (m_type == BlatherMessageType::INVALID) {
         throw std::runtime_error("Invalid message - invalid type");
     }
     m_payload = data.substr(index);
