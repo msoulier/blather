@@ -21,9 +21,9 @@ int accept_connections(TcpNetworkManager &netman, ProtocolHandler &protocol) {
     mlog.debug() << "going into accept" << std::endl;
     if ( (sessionid = netman.accept()) ) {
         mlog.debug() << "netman sessionid is " << sessionid << std::endl;
-        ServerSessionHandler session(&netman, &protocol, sessionid);
+        ServerSessionHandler *session = new ServerSessionHandler(&netman, &protocol, sessionid);
         mlog.info() << "accepted network connection - starting session thread" << std::endl;
-        std::thread *session_thread = new std::thread(&ServerSessionHandler::run, &session);
+        std::thread *session_thread = new std::thread(&ServerSessionHandler::run, session);
         g_threads.push_back(session_thread);
         return 1;
     } else {

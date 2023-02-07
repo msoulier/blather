@@ -23,7 +23,11 @@ NetworkManager::NetworkManager() :
 {}
 
 NetworkManager::~NetworkManager()
-{}
+{
+    // Unconditionally shut down the socket and close it.
+    shutdown(m_sockfd, SHUT_RDWR);
+    close(m_sockfd);
+}
 
 void NetworkManager::set_mode(NetworkManagerMode mode) {
     // Can only set mode from UNSET.
@@ -49,12 +53,14 @@ ssize_t NetworkManager::write(const std::string msg, SESSIONID sessionid) {
         return -1;
     }
     assert( msg.size() <= MAX_BUFFER );
+    mlog.debug() << "write: size of " << msg.size() << ", data '" << msg.c_str() << "'" << std::endl;
     int bytes = ::write(fd, msg.c_str(), msg.size());
     return bytes;
 }
 
 ssize_t NetworkManager::read(std::string &buffer, SESSIONID sessionid) {
     mlog.debug() << "NetworkManager::read on sessionid " << sessionid << std::endl;
+    mlog.debug() << "buffer.size is currently " << buffer.size() << std::endl;
     assert( m_mode != NetworkManagerMode::UNSET );
     int fd;
     if (m_sessionmap.count(sessionid) == 1) {
@@ -70,7 +76,8 @@ ssize_t NetworkManager::read(std::string &buffer, SESSIONID sessionid) {
         perror("read");
         return bytes_read;
     }
-    buffer = cbuffer;
+    buffer.assign(cbuffer, bytes_read);
+    mlog.debug() << "read: bytes " << bytes_read << " buffer size is " << buffer.size() << std::endl;
     return bytes_read;
 }
 

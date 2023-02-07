@@ -42,13 +42,13 @@ bclient: $(COBJS)
 bserver: $(SOBJS)
 	$(CC) -o bserver $(LDFLAGS) $(SOBJS) $(LIBS)
 
-bclient.o: bclient.cpp protocol.hpp network.hpp ../mikelibcpp/libmikecpp.a
+bclient.o: bclient.cpp protocol.hpp network.hpp session.hpp ../mikelibcpp/libmikecpp.a
 	$(CC) $(CFLAGS) -c bclient.cpp
 
-bserver.o: bserver.cpp protocol.hpp network.hpp ../mikelibcpp/libmikecpp.a
+bserver.o: bserver.cpp protocol.hpp network.hpp session.hpp ../mikelibcpp/libmikecpp.a
 	$(CC) $(CFLAGS) -c bserver.cpp
 
-protocol.o: protocol.cpp protocol.hpp
+protocol.o: protocol.cpp protocol.hpp session.hpp
 	$(CC) $(CFLAGS) -c protocol.cpp
 
 logger.o: logger.cpp logger.hpp

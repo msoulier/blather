@@ -14,7 +14,7 @@ BlatherMessage::~BlatherMessage()
 
 std::string BlatherMessage::print() {
     std::stringstream stream;
-    stream << "BlatherMessage: " << "[" << message_map.at(m_type) << "]" << " " << m_payload << std::endl;
+    stream << "BlatherMessage: " << "[" << message_map.at(m_type) << "]" << " " << m_payload;
     return stream.str();
 }
 
@@ -22,11 +22,13 @@ std::string BlatherMessage::transmit() {
     std::string onwire;
     mlog.debug() << "transmit message: " << *this << std::endl;
     onwire = message_map.at(m_type) + " " + m_payload + "\r\n";
+    mlog.debug() << "returning onwire: " << onwire << std::endl;
     return onwire;
 }
 
 BlatherMessageType BlatherMessage::message_map_to_type(std::string smtype) {
     for (const auto& [key, value] : message_map) {
+        mlog.debug() << "message_map_to_type: " << "smtype is " << smtype << ", value is " << value << std::endl;
         if (smtype == value) {
             return key;
         }
@@ -94,6 +96,7 @@ std::vector<BlatherMessage> ProtocolHandler::interpret(std::string &buffer) {
     // Look for all \r\n delimited messages.
     std::string::size_type n;
     const std::string delim = "\r\n";
+    mlog.debug() << "interpret: buffer is '" << buffer << "'" << std::endl;
     for (;;) {
         n = buffer.find(delim);
         if (n == std::string::npos) {
@@ -105,7 +108,13 @@ std::vector<BlatherMessage> ProtocolHandler::interpret(std::string &buffer) {
         BlatherMessage message;
         message.receive(msg);
         messages.push_back(message);
-        buffer = buffer.substr(n+delim.size());
+        mlog.debug() << "n+delim.size() is " << n+delim.size() << std::endl;
+        mlog.debug() << "buffer.size() is " << buffer.size() << std::endl;
+        if (n+delim.size() >= buffer.size()) {
+            buffer.clear();
+        } else {
+            buffer = buffer.substr(n+delim.size());
+        }
         mlog.debug() << "interpret buffer now: " << buffer << std::endl;
     }
     return messages;

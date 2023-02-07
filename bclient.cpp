@@ -61,7 +61,7 @@ void shutdown_handler(int signum) {
     shutdown();
 }
 
-int handle_user(ClientSessionHandler &session) {
+int handle_user(ClientSessionHandler *session) {
     std::string command;
     for (;;) {
         // FIXME: pull in gnu readline
@@ -74,7 +74,7 @@ int handle_user(ClientSessionHandler &session) {
             shutdown();
             return 0;
         }
-        session.say(command);
+        session->say(command);
     }
 }
 
@@ -102,9 +102,9 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    ClientSessionHandler session(&netman, &protocol, client_sessionid);
+    ClientSessionHandler *session = new ClientSessionHandler(&netman, &protocol, client_sessionid);
     // Run the session in its own thread, and let the main thread handle user interaction.
-    g_session = new std::thread(&ClientSessionHandler::run, &session);
+    g_session = new std::thread(&ClientSessionHandler::run, session);
 
     // Server connection is up, time to start talking.
     return handle_user(session);
