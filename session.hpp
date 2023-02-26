@@ -3,7 +3,7 @@
 
 #include <atomic>
 
-#include "network.hpp"
+#include "mnetwork.hpp"
 
 extern std::atomic<bool> g_shutdown_asap;
 

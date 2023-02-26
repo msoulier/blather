@@ -6,7 +6,7 @@
 
 #include "logger.hpp"
 #include "protocol.hpp"
-#include "network.hpp"
+#include "mnetwork.hpp"
 #include "session.hpp"
 
 #define VERSION "0.1"

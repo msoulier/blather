@@ -1,0 +1,24 @@
+{
+  "configurations": {
+    "Vim - run client": {
+      "adapter": "vscode-cpptools",
+      "configuration": {
+        "type":    "cppdbg",
+        "request": "launch",
+        "program": "${workspaceRoot}/bclient",
+        "args": [
+          "localhost",
+          "5000"
+        ],
+        "cwd": "${workspaceRoot}",
+        "environment": [],
+        "externalConsole": true,
+        "stopAtEntry": true,
+        "MIMode": "gdb",
+        "logging": {
+          "engineLogging": false
+        }
+      }
+    }
+  }
+}

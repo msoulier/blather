@@ -1,5 +1,5 @@
 #include <assert.h>
-#include "network.hpp"
+#include "mnetwork.hpp"
 #include "protocol.hpp"
 #include "session.hpp"
 #include "logger.hpp"
