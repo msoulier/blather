@@ -27,7 +27,7 @@ int accept_connections(TcpNetworkManager &netman, ProtocolHandler &protocol) {
         g_threads.push_back(session_thread);
         return 1;
     } else {
-        mlog.warn() << "failed to set up network connection" << std::endl;
+        mlog.warning() << "failed to set up network connection" << std::endl;
         return 0;
     }
 }

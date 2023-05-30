@@ -3,7 +3,7 @@ makefile_dir := $(shell dirname $(current_makefile))
 include $(makefile_dir)/Makefile.arch
 
 CC = g++
-CFLAGS = -Wall -std=c++17 -I../mikelibcpp -g -gdwarf-4 -DDEBUG -O0 -fno-omit-frame-pointer
+CFLAGS = -Wall -std=c++17 -I../mikelibcpp -I../mikelibc -g -gdwarf-4 -DDEBUG -O0 -fno-omit-frame-pointer
 COBJS = bclient.o protocol.o logger.o session.o
 SOBJS = bserver.o protocol.o logger.o session.o
 LIBS = -lasan -lpthread -lmikecpp
@@ -29,7 +29,7 @@ help:
 mikelibcpp:
 	cd ../mikelibcpp && make DEBUG=$(DEBUG)
 
-test.o: test.cpp ../mikelibcpp/mnetwork.hpp
+test.o: test.cpp ../mikelibcpp/mnetwork.hpp ../mikelibc/mnet.h ../mikelibc/mlog.h
 	$(CC) $(CFLAGS) -c test.cpp
 
 test: test.o network.o
@@ -42,10 +42,10 @@ bclient: $(COBJS)
 bserver: $(SOBJS)
 	$(CC) -o bserver $(LDFLAGS) $(SOBJS) $(LIBS)
 
-bclient.o: bclient.cpp protocol.hpp session.hpp ../mikelibcpp/mnetwork.hpp
+bclient.o: bclient.cpp protocol.hpp session.hpp ../mikelibcpp/mnetwork.hpp ../mikelibc/mnet.h ../mikelibc/mlog.h
 	$(CC) $(CFLAGS) -c bclient.cpp
 
-bserver.o: bserver.cpp protocol.hpp session.hpp ../mikelibcpp/mnetwork.hpp
+bserver.o: bserver.cpp protocol.hpp session.hpp ../mikelibcpp/mnetwork.hpp ../mikelibc/mnet.h ../mikelibc/mlog.h
 	$(CC) $(CFLAGS) -c bserver.cpp
 
 protocol.o: protocol.cpp protocol.hpp session.hpp
