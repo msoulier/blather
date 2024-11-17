@@ -1,4 +1,0 @@
-ARCH=$(shell uname -m)
-OS=$(shell uname -s | tr '[a-z]' '[A-Z]')
-COMP_VER=$(shell cc --version | head -1 | awk 'i = match($$0, /([0-9]\.[0-9]\.[0-9])/) { print substr($$0, i, 1) substr($$0, i+2, 1) }')
-COMP_NAME=$(shell cc --version | head -1 | awk 'BEGIN { clang=0; gcc=0 } /clang/ { clang=1 } END { if (clang) { print "CL" } else { print "G" } }')

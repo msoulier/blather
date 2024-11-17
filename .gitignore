@@ -35,3 +35,5 @@ bserver
 
 # vim
 *.swp
+
+build/
